@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TA Bounce Screener</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f7f7f5;color:#1a1a1a;min-height:100vh}
+  .header{background:#fff;border-bottom:1px solid #e8e8e5;padding:1.25rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+  .header h1{font-size:18px;font-weight:500}
+  .header .sub{font-size:12px;color:#888;margin-top:2px}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  select,button{font-family:inherit;font-size:13px;border-radius:8px;border:1px solid #ddd;padding:7px 12px;background:#fff;color:#1a1a1a;cursor:pointer}
+  select:focus,button:focus{outline:2px solid #378ADD;outline-offset:1px}
+  .scan-btn{background:#1a1a1a;color:#fff;border-color:#1a1a1a;font-weight:500;padding:7px 20px}
+  .scan-btn:hover{background:#333}
+  .scan-btn:disabled{opacity:0.4;cursor:not-allowed}
+  .main{padding:1.5rem 2rem;max-width:1100px;margin:0 auto}
+  .progress-wrap{height:3px;background:#eee;border-radius:2px;margin-bottom:1rem;overflow:hidden;display:none}
+  .progress-fill{height:100%;background:#378ADD;border-radius:2px;transition:width 0.3s}
+  .status{font-size:12px;color:#888;margin-bottom:1rem;min-height:18px}
+  .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.25rem}
+  .stat{background:#fff;border:1px solid #e8e8e5;border-radius:10px;padding:1rem}
+  .stat-label{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px}
+  .stat-value{font-size:22px;font-weight:500}
+  .card{background:#fff;border:1px solid #e8e8e5;border-radius:12px;overflow:hidden}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th{text-align:left;font-size:11px;font-weight:500;color:#888;text-transform:uppercase;letter-spacing:0.05em;padding:10px 14px;border-bottom:1px solid #e8e8e5;background:#fafaf8;white-space:nowrap}
+  td{padding:11px 14px;border-bottom:1px solid #f0f0ec;vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:#fafaf8}
+  .ticker{font-weight:600;font-size:14px}
+  .name{font-size:11px;color:#888;font-weight:400;display:block;margin-top:1px}
+  .red{color:#A32D2D;font-weight:600}
+  .green{color:#3B6D11}
+  .amber{color:#854F0B}
+  .muted{color:#888}
+  .bar-wrap{display:inline-block;width:64px;height:7px;background:#eee;border-radius:4px;overflow:hidden;vertical-align:middle;margin-right:8px}
+  .bar-fill{height:100%;border-radius:4px}
+  .pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;font-weight:500}
+  .pill-s{background:#EAF3DE;color:#27500A}
+  .pill-m{background:#FAEEDA;color:#633806}
+  .pill-w{background:#FCEBEB;color:#791F1F}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:#888;margin-top:1rem}
+  .legend span{display:flex;align-items:center;gap:6px}
+  .skeleton{background:#eee;border-radius:3px;display:inline-block;animation:pulse 1.3s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+  .empty{padding:3rem;text-align:center;color:#888;font-size:14px;line-height:1.8}
+  .err{background:#FCEBEB;border-radius:10px;padding:1rem 1.25rem;color:#791F1F;font-size:13px;margin-bottom:1rem;line-height:1.6}
+  .info{background:#E6F1FB;border-radius:10px;padding:0.85rem 1.25rem;color:#0C447C;font-size:12px;margin-bottom:1rem;line-height:1.6}
+  .footer{font-size:11px;color:#aaa;margin-top:1rem;line-height:1.6}
+  .signal-col{display:flex;align-items:center}
+  @media(max-width:700px){
+    .header{padding:1rem}.main{padding:1rem}
+    .stats-grid{grid-template-columns:1fr 1fr}
+    th:nth-child(5),td:nth-child(5){display:none}
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>TA Bounce Screener</h1>
+    <div class="sub">Finds oversold stocks with bounce potential using RSI · SMA20 · Volume signals</div>
+  </div>
+  <div class="controls">
+    <select id="sectorSel">
+      <option value="biotech">Biotech / Pharma</option>
+      <option value="tech">Technology</option>
+      <option value="general">Broad Market</option>
+    </select>
+    <select id="dropSel">
+      <option value="5">Drop &gt; 5%</option>
+      <option value="10" selected>Drop &gt; 10%</option>
+      <option value="15">Drop &gt; 15%</option>
+      <option value="20">Drop &gt; 20%</option>
+    </select>
+    <button class="scan-btn" id="scanBtn" onclick="runScan()">Scan now</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="info" id="infoBox">
+    Fetches 3 months of real daily price &amp; volume data from Yahoo Finance. Scores each stock on 4 signals: RSI (oversold threshold), distance below 20-day SMA, recent volume spike, and 1-month price drop. Top candidates ranked by composite bounce score.
+  </div>
+
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-fill" id="progressFill" style="width:0%"></div>
+  </div>
+  <div class="status" id="status">Select a sector and press Scan now.</div>
+  <div id="errBox"></div>
+
+  <div class="stats-grid" id="statsGrid" style="display:none">
+    <div class="stat"><div class="stat-label">Scanned</div><div class="stat-value" id="sScanned">—</div></div>
+    <div class="stat"><div class="stat-label">Matched filter</div><div class="stat-value" id="sMatched">—</div></div>
+    <div class="stat"><div class="stat-label">Avg RSI (top 10)</div><div class="stat-value" id="sRSI">—</div></div>
+    <div class="stat"><div class="stat-label">Scan time</div><div class="stat-value" id="sTime">—</div></div>
+  </div>
+
+  <div class="card" id="tableCard" style="display:none">
+    <table id="resultsTable">
+      <thead>
+        <tr>
+          <th>Ticker</th>
+          <th>Price</th>
+          <th>1M drop</th>
+          <th>RSI</th>
+          <th>vs SMA20</th>
+          <th>Vol spike</th>
+          <th>Bounce score</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+  <div class="legend" id="legend" style="display:none">
+    <span><span class="pill pill-s">Strong</span> Score 75+</span>
+    <span><span class="pill pill-m">Moderate</span> Score 50–74</span>
+    <span><span class="pill pill-w">Weak</span> Score &lt;50</span>
+    <span>RSI &lt;30 = oversold &nbsp;·&nbsp; vol spike = unusual volume vs 20-day avg</span>
+  </div>
+
+  <div class="footer">
+    Data sourced from Yahoo Finance via corsproxy.io. For informational purposes only — not financial advice. Always do your own research before investing.
+  </div>
+</div>
+
+<script>
+const SECTORS = {
+  biotech:{
+    label:"Biotech / Pharma",
+    tickers:{
+      MRNA:"Moderna",NVAX:"Novavax",BNTX:"BioNTech",SRPT:"Sarepta",IONS:"Ionis",
+      BLUE:"bluebird bio",BEAM:"Beam Therapeutics",EDIT:"Editas Medicine",CRSP:"CRISPR Tx",
+      ALNY:"Alnylam",ARWR:"Arrowhead",ACAD:"Acadia Pharma",KYMR:"Kymera",RCKT:"Rocket Pharma",
+      RARE:"Ultragenyx",FOLD:"Amicus Tx",DNLI:"Denali Tx",NTLA:"Intellia",RETA:"Reata",
+      PRAX:"Praxis Bio",SGMO:"Sangamo",VRTX:"Vertex",BMRN:"BioMarin",INSM:"Insmed",
+      EXAS:"Exact Sciences",NKTR:"Nektar",FATE:"Fate Therapeutics",HALO:"Halozyme",
+      REGN:"Regeneron",SGEN:"Seagen"
+    }
+  },
+  tech:{
+    label:"Technology",
+    tickers:{
+      SNAP:"Snap",PINS:"Pinterest",RBLX:"Roblox",PLTR:"Palantir",SOFI:"SoFi",
+      HOOD:"Robinhood",PATH:"UiPath",AI:"C3.ai",SOUN:"SoundHound",ASTS:"AST SpaceMobile",
+      IONQ:"IonQ",WOLF:"Wolfspeed",LAZR:"Luminar",RIVN:"Rivian",LCID:"Lucid",
+      JOBY:"Joby Aviation",ACHR:"Archer Aviation",OPEN:"Opendoor",PSFE:"Paysafe",
+      MAPS:"WM Technology",DKNG:"DraftKings",GENI:"Genius Sports",SKLZ:"Skillz",
+      SPCE:"Virgin Galactic",NKLA:"Nikola",XPEV:"XPeng",NIO:"NIO",LI:"Li Auto",
+      RIVN:"Rivian",FSR:"Fisker"
+    }
+  },
+  general:{
+    label:"Broad Market",
+    tickers:{
+      AAPL:"Apple",TSLA:"Tesla",AMZN:"Amazon",GOOGL:"Alphabet",NVDA:"Nvidia",
+      AMD:"AMD",PFE:"Pfizer",JNJ:"Johnson & Johnson",DIS:"Disney",NFLX:"Netflix",
+      UBER:"Uber",F:"Ford",GM:"General Motors",NKE:"Nike",SBUX:"Starbucks",
+      BA:"Boeing",GE:"GE",INTC:"Intel",META:"Meta",SHOP:"Shopify",
+      PYPL:"PayPal",SQ:"Block",ROKU:"Roku",PTON:"Peloton",DOCU:"DocuSign",
+      LMND:"Lemonade",OSCR:"Oscar Health",ROOT:"Root Insurance",ZOOM:"Zoom",TWTR:"Twitter"
+    }
+  }
+};
+
+// ── TA calculations ──────────────────────────────────────────────────────────
+
+function calcRSI(closes, period=14){
+  if(closes.length < period+1) return 50;
+  let g=0, l=0;
+  for(let i=closes.length-period; i<closes.length; i++){
+    const d=closes[i]-closes[i-1];
+    if(d>0) g+=d; else l-=d;
+  }
+  const ag=g/period, al=l/period;
+  if(al===0) return 100;
+  return Math.round(100-100/(1+ag/al)*10)/10;
+}
+
+function calcSMA(closes, period=20){
+  const s=closes.slice(-period);
+  return s.reduce((a,b)=>a+b,0)/s.length;
+}
+
+function scoreStock(ticker, closes, volumes){
+  const n=closes.length;
+  const current=closes[n-1];
+  const monthAgo=closes[Math.max(0,n-22)];
+  const drop=((current-monthAgo)/monthAgo)*100;
+  const rsi=calcRSI(closes);
+  const sma20=calcSMA(closes,20);
+  const pctVsSMA=((current-sma20)/sma20)*100;
+  const rv=volumes.slice(-5).reduce((a,b)=>a+b,0)/5;
+  const av=volumes.slice(-20).reduce((a,b)=>a+b,0)/20;
+  const volSpike=av>0?rv/av:1;
+
+  let score=0;
+  if(rsi<25) score+=40; else if(rsi<30) score+=32; else if(rsi<40) score+=20; else if(rsi<50) score+=10;
+  if(pctVsSMA<-20) score+=30; else if(pctVsSMA<-15) score+=22; else if(pctVsSMA<-10) score+=15; else if(pctVsSMA<-5) score+=7;
+  if(volSpike>2.5) score+=20; else if(volSpike>2) score+=15; else if(volSpike>1.5) score+=10; else if(volSpike>1.2) score+=5;
+  if(drop<-20) score+=10; else if(drop<-10) score+=6; else if(drop<-5) score+=3;
+
+  return{ticker,current,drop,rsi,sma20,pctVsSMA,volSpike,score:Math.min(score,100)};
+}
+
+// ── Data fetching ────────────────────────────────────────────────────────────
+
+async function fetchTicker(ticker){
+  const end=Math.floor(Date.now()/1000);
+  const start=end-95*24*3600;
+  const yahooUrl=`https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&period1=${start}&period2=${end}&includePrePost=false`;
+
+  const proxies=[
+    `https://corsproxy.io/?${encodeURIComponent(yahooUrl)}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(yahooUrl)}`,
+    `https://proxy.cors.sh/${yahooUrl}`,
+  ];
+
+  for(const url of proxies){
+    try{
+      const r=await fetch(url,{signal:AbortSignal.timeout(9000)});
+      if(!r.ok) continue;
+      const text=await r.text();
+      if(!text||text.length<200) continue;
+      const d=JSON.parse(text);
+      const result=d?.chart?.result?.[0];
+      if(!result) continue;
+      const q=result.indicators?.quote?.[0];
+      if(!q) continue;
+      const rawCloses=q.close||[];
+      const rawVols=q.volume||[];
+      const pairs=rawCloses.map((c,i)=>({c,v:rawVols[i]||0})).filter(x=>x.c!=null&&x.c>0&&!isNaN(x.c));
+      if(pairs.length<22) continue;
+      return{closes:pairs.map(p=>p.c),volumes:pairs.map(p=>p.v)};
+    }catch(e){ continue; }
+  }
+  return null;
+}
+
+// ── UI helpers ───────────────────────────────────────────────────────────────
+
+function pill(score){
+  if(score>=75) return'<span class="pill pill-s">Strong</span>';
+  if(score>=50) return'<span class="pill pill-m">Moderate</span>';
+  return'<span class="pill pill-w">Weak</span>';
+}
+function barCol(score){ return score>=75?'#639922':score>=50?'#BA7517':'#E24B4A'; }
+function rsiCol(rsi){ return rsi<30?'#A32D2D':rsi<50?'#854F0B':'#888'; }
+
+function renderSkeleton(n=8){
+  const tbody=document.getElementById('tableBody');
+  tbody.innerHTML='';
+  for(let i=0;i<n;i++){
+    const tr=document.createElement('tr');
+    tr.innerHTML=[110,60,60,40,70,60,130].map(w=>
+      `<td><span class="skeleton" style="width:${w}px;height:13px;">&nbsp;</span></td>`
+    ).join('');
+    tbody.appendChild(tr);
+  }
+  document.getElementById('tableCard').style.display='block';
+}
+
+// ── Main scan ────────────────────────────────────────────────────────────────
+
+async function runScan(){
+  const btn=document.getElementById('scanBtn');
+  const statusEl=document.getElementById('status');
+  const errBox=document.getElementById('errBox');
+  const progressWrap=document.getElementById('progressWrap');
+  const progressFill=document.getElementById('progressFill');
+
+  errBox.innerHTML='';
+  document.getElementById('statsGrid').style.display='none';
+  document.getElementById('legend').style.display='none';
+  document.getElementById('infoBox').style.display='none';
+
+  const minDrop=parseInt(document.getElementById('dropSel').value);
+  const sector=document.getElementById('sectorSel').value;
+  const tickerMap=SECTORS[sector].tickers;
+  const tickers=Object.keys(tickerMap);
+
+  btn.disabled=true;
+  progressWrap.style.display='block';
+  progressFill.style.width='0%';
+  renderSkeleton();
+
+  const t0=Date.now();
+  let done=0, failed=0;
+  const results=[];
+
+  await Promise.all(tickers.map(async ticker=>{
+    const data=await fetchTicker(ticker);
+    done++;
+    progressFill.style.width=Math.round((done/tickers.length)*100)+'%';
+    statusEl.textContent=`Fetching... ${done}/${tickers.length} — ${results.length} matched so far`;
+    if(!data){ failed++; return; }
+    const scored=scoreStock(ticker,data.closes,data.volumes);
+    if(scored.drop<=-minDrop) results.push(scored);
+  }));
+
+  progressWrap.style.display='none';
+  results.sort((a,b)=>b.score-a.score);
+  const top=results.slice(0,10);
+  const elapsed=((Date.now()-t0)/1000).toFixed(1)+'s';
+
+  // ── Stats ──
+  document.getElementById('sScanned').textContent=tickers.length-failed;
+  document.getElementById('sMatched').textContent=results.length;
+  document.getElementById('sRSI').textContent=top.length
+    ? Math.round(top.reduce((a,s)=>a+s.rsi,0)/top.length)
+    : '—';
+  document.getElementById('sTime').textContent=elapsed;
+  document.getElementById('statsGrid').style.display='grid';
+
+  if(failed===tickers.length){
+    errBox.innerHTML=`<div class="err">
+      Could not load any stock data. This usually means the CORS proxies are temporarily unavailable.
+      <br><br>Try again in a minute, or try a different sector. If it keeps failing, the proxy may be rate-limiting — wait 5 minutes and retry.
+    </div>`;
+    document.getElementById('tableCard').style.display='none';
+    statusEl.textContent='All fetches failed.';
+    btn.disabled=false;
+    return;
+  }
+
+  if(failed>0){
+    errBox.innerHTML=`<div style="font-size:12px;color:#888;margin-bottom:0.75rem">${failed} ticker${failed>1?'s':''} could not be loaded (proxy timeout) — results based on ${tickers.length-failed} stocks.</div>`;
+  }
+
+  const tbody=document.getElementById('tableBody');
+  tbody.innerHTML='';
+
+  if(top.length===0){
+    tbody.innerHTML=`<tr><td colspan="7"><div class="empty">
+      No stocks dropped more than ${minDrop}% in the past month.<br>
+      Markets may be broadly flat or rising — try lowering the threshold to 5%.
+    </div></td></tr>`;
+  } else {
+    top.forEach(s=>{
+      const name=tickerMap[s.ticker]||'';
+      const tr=document.createElement('tr');
+      tr.innerHTML=`
+        <td><span class="ticker">${s.ticker}</span><span class="name">${name}</span></td>
+        <td class="muted">$${s.current.toFixed(2)}</td>
+        <td class="red">${s.drop.toFixed(1)}%</td>
+        <td style="color:${rsiCol(s.rsi)};font-weight:500">${s.rsi}</td>
+        <td class="red">${s.pctVsSMA.toFixed(1)}%</td>
+        <td class="${s.volSpike>1.5?'green':s.volSpike>1.2?'amber':'muted'}">${s.volSpike.toFixed(2)}×</td>
+        <td>
+          <div class="signal-col">
+            <span class="bar-wrap"><span class="bar-fill" style="width:${s.score}%;background:${barCol(s.score)}"></span></span>
+            <span class="muted" style="font-size:12px;margin-right:8px">${s.score}</span>
+            ${pill(s.score)}
+          </div>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  const ts=new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'});
+  statusEl.textContent=`Scan complete — ${top.length} candidates shown. Last updated ${ts}.`;
+  document.getElementById('tableCard').style.display='block';
+  document.getElementById('legend').style.display='flex';
+  btn.disabled=false;
+}
+</script>
+</body>
+</html>
