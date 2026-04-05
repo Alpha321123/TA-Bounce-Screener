@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TA Bounce Screener</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f7f7f5;color:#1a1a1a;min-height:100vh}
+  .header{background:#fff;border-bottom:1px solid #e8e8e5;padding:1.1rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;position:sticky;top:0;z-index:10}
+  .header h1{font-size:17px;font-weight:600}
+  .header .sub{font-size:12px;color:#888;margin-top:2px}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  select,button{font-family:inherit;font-size:13px;border-radius:8px;border:1px solid #ddd;padding:6px 11px;background:#fff;color:#1a1a1a;cursor:pointer}
+  .scan-btn{background:#1a1a1a;color:#fff;border-color:#1a1a1a;font-weight:500;padding:6px 18px}
+  .scan-btn:hover{background:#333}
+  .scan-btn:disabled{opacity:0.4;cursor:not-allowed}
+  .main{padding:1.25rem 2rem;max-width:1200px;margin:0 auto}
+  .progress-wrap{height:3px;background:#eee;border-radius:2px;margin-bottom:0.75rem;overflow:hidden;display:none}
+  .progress-fill{height:100%;background:#378ADD;border-radius:2px;transition:width 0.3s}
+  .status{font-size:12px;color:#888;margin-bottom:0.75rem;min-height:18px}
+  .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.25rem}
+  .stat{background:#fff;border:1px solid #e8e8e5;border-radius:10px;padding:0.9rem 1rem}
+  .stat-label{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px}
+  .stat-value{font-size:21px;font-weight:500}
+  .card{background:#fff;border:1px solid #e8e8e5;border-radius:12px;overflow:hidden;margin-bottom:1rem}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;font-size:11px;font-weight:500;color:#888;text-transform:uppercase;letter-spacing:0.05em;padding:9px 12px;border-bottom:1px solid #e8e8e5;background:#fafaf8;white-space:nowrap;cursor:pointer;user-select:none}
+  th:hover{color:#333}
+  td{padding:10px 12px;border-bottom:1px solid #f0f0ec;vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:#fafaf8}
+  .ticker-link{font-weight:600;font-size:14px;color:#1a1a1a;text-decoration:none}
+  .ticker-link:hover{color:#378ADD;text-decoration:underline}
+  .co-name{font-size:11px;color:#888;display:block;margin-top:1px}
+  .red{color:#A32D2D;font-weight:500}
+  .green{color:#3B6D11}
+  .amber{color:#854F0B}
+  .muted{color:#888}
+  .bar-wrap{display:inline-block;width:58px;height:7px;background:#eee;border-radius:4px;overflow:hidden;vertical-align:middle;margin-right:7px}
+  .bar-fill{height:100%;border-radius:4px}
+  .pill{display:inline-block;font-size:11px;padding:2px 7px;border-radius:10px;font-weight:500}
+  .pill-s{background:#EAF3DE;color:#27500A}
+  .pill-m{background:#FAEEDA;color:#633806}
+  .pill-w{background:#FCEBEB;color:#791F1F}
+  .wl-btn{background:none;border:1px solid #ddd;border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer;color:#888}
+  .wl-btn.saved{background:#EAF3DE;border-color:#9FE1CB;color:#27500A}
+  .wl-btn:hover{border-color:#aaa;color:#333}
+  .reason-cell{font-size:12px;color:#555;max-width:200px;line-height:1.4}
+  .reason-loading{color:#bbb;font-style:italic;font-size:12px}
+  .skeleton{background:#eee;border-radius:3px;display:inline-block;animation:pulse 1.3s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+  .empty{padding:2.5rem;text-align:center;color:#888;font-size:14px;line-height:1.8}
+  .err{background:#FCEBEB;border-radius:10px;padding:0.85rem 1.1rem;color:#791F1F;font-size:13px;margin-bottom:1rem;line-height:1.6}
+  .warn{background:#FAEEDA;border-radius:10px;padding:0.7rem 1rem;font-size:12px;color:#633806;margin-bottom:0.75rem}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:#888;margin-bottom:0.75rem}
+  .legend span{display:flex;align-items:center;gap:5px}
+  .footer{font-size:11px;color:#aaa;margin-top:1rem;line-height:1.6}
+  .watchlist-section{background:#fff;border:1px solid #e8e8e5;border-radius:12px;padding:1rem 1.25rem;margin-bottom:1.25rem;display:none}
+  .watchlist-title{font-size:13px;font-weight:500;margin-bottom:0.5rem;display:flex;justify-content:space-between;align-items:center}
+  .wl-tags{display:flex;flex-wrap:wrap;gap:6px}
+  .wl-tag{background:#f0f0ec;border-radius:6px;padding:3px 10px;font-size:12px;display:flex;align-items:center;gap:6px}
+  .wl-remove{cursor:pointer;color:#aaa;font-size:14px;line-height:1}
+  .wl-remove:hover{color:#A32D2D}
+  .clear-wl{font-size:12px;color:#888;cursor:pointer;border:none;background:none;padding:0}
+  .clear-wl:hover{color:#A32D2D}
+  .rsi-bar-wrap{display:inline-block;width:36px;height:6px;background:#eee;border-radius:3px;overflow:hidden;vertical-align:middle;margin-right:5px}
+  .rsi-bar-fill{height:100%;border-radius:3px}
+  @media(max-width:900px){.reason-cell,.reason-loading{display:none}th:nth-child(8),td:nth-child(8){display:none}}
+  @media(max-width:650px){.stats-grid{grid-template-columns:1fr 1fr}.main{padding:1rem}.header{padding:0.9rem 1rem}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>TA Bounce Screener</h1>
+    <div class="sub">Oversold stocks with bounce potential · RSI · SMA20 · Volume</div>
+  </div>
+  <div class="controls">
+    <select id="sectorSel">
+      <option value="biotech">Biotech / Pharma (US)</option>
+      <option value="asx_biotech">Biotech / Pharma (ASX)</option>
+      <option value="tech">Technology (US)</option>
+      <option value="general">Broad Market (US)</option>
+    </select>
+    <select id="dropSel">
+      <option value="5">Drop &gt; 5%</option>
+      <option value="10" selected>Drop &gt; 10%</option>
+      <option value="15">Drop &gt; 15%</option>
+      <option value="20">Drop &gt; 20%</option>
+    </select>
+    <button class="scan-btn" id="scanBtn" onclick="runScan()">Scan now</button>
+  </div>
+</div>
+
+<div class="main">
+
+  <div class="watchlist-section" id="watchlistSection">
+    <div class="watchlist-title">
+      <span>Watchlist</span>
+      <button class="clear-wl" onclick="clearWatchlist()">Clear all</button>
+    </div>
+    <div class="wl-tags" id="wlTags"></div>
+  </div>
+
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-fill" id="progressFill" style="width:0%"></div>
+  </div>
+  <div class="status" id="status">Select a sector and press Scan now to fetch live data.</div>
+  <div id="errBox"></div>
+  <div id="warnBox"></div>
+
+  <div class="stats-grid" id="statsGrid" style="display:none">
+    <div class="stat"><div class="stat-label">Stocks loaded</div><div class="stat-value" id="sScanned">—</div></div>
+    <div class="stat"><div class="stat-label">Matched filter</div><div class="stat-value" id="sMatched">—</div></div>
+    <div class="stat"><div class="stat-label">Avg RSI (top 10)</div><div class="stat-value" id="sRSI">—</div></div>
+    <div class="stat"><div class="stat-label">Scan time</div><div class="stat-value" id="sTime">—</div></div>
+  </div>
+
+  <div class="legend" id="legend" style="display:none">
+    <span><span class="pill pill-s">Strong</span> 75+</span>
+    <span><span class="pill pill-m">Moderate</span> 50–74</span>
+    <span><span class="pill pill-w">Weak</span> &lt;50</span>
+    <span class="muted">RSI &lt;30 = oversold · vol spike = recent vs 20-day avg · click headers to sort</span>
+  </div>
+
+  <div class="card" id="tableCard" style="display:none">
+    <table>
+      <thead>
+        <tr>
+          <th onclick="sortBy('ticker')">Ticker ↕</th>
+          <th onclick="sortBy('current')">Price ↕</th>
+          <th onclick="sortBy('drop')">1M drop ↕</th>
+          <th onclick="sortBy('rsi')">RSI ↕</th>
+          <th onclick="sortBy('pctVsSMA')">vs SMA20 ↕</th>
+          <th onclick="sortBy('volSpike')">Vol spike ↕</th>
+          <th onclick="sortBy('score')">Score ↕</th>
+          <th>Drop reason (AI)</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+  <div class="footer">
+    Data from Yahoo Finance via corsproxy.io. Drop reasons are AI-generated estimates only. For informational purposes — not financial advice. Do your own research before investing.
+  </div>
+</div>
+
+<script>
+const SECTORS={
+  biotech:{label:"Biotech / Pharma (US)",tickers:{
+    MRNA:"Moderna",NVAX:"Novavax",BNTX:"BioNTech",SRPT:"Sarepta",IONS:"Ionis",
+    BLUE:"bluebird bio",BEAM:"Beam Therapeutics",EDIT:"Editas Medicine",CRSP:"CRISPR Tx",
+    ALNY:"Alnylam",ARWR:"Arrowhead",ACAD:"Acadia Pharma",KYMR:"Kymera",RCKT:"Rocket Pharma",
+    RARE:"Ultragenyx",FOLD:"Amicus Tx",DNLI:"Denali Tx",NTLA:"Intellia",RETA:"Reata",
+    PRAX:"Praxis Bio",SGMO:"Sangamo",VRTX:"Vertex",BMRN:"BioMarin",INSM:"Insmed",
+    EXAS:"Exact Sciences",NKTR:"Nektar",FATE:"Fate Therapeutics",HALO:"Halozyme",
+    REGN:"Regeneron",SGEN:"Seagen"
+  }},
+  asx_biotech:{label:"Biotech / Pharma (ASX)",tickers:{
+    "CSL.AX":"CSL Limited","PNV.AX":"PolyNovo","IMM.AX":"Immutep",
+    "NEU.AX":"Neuren Pharma","RMD.AX":"ResMed","COH.AX":"Cochlear",
+    "SHL.AX":"Sonic Healthcare","TLX.AX":"Telix Pharma","PYC.AX":"PYC Therapeutics",
+    "OPT.AX":"Opthea","AVH.AX":"Avita Medical","RAC.AX":"Race Oncology",
+    "EBR.AX":"EBR Systems","IHL.AX":"Impedimed","SOM.AX":"SomnoMed",
+    "1AD.AX":"Adalta","PAB.AX":"Patrys","CU6.AX":"Copper6 Health",
+    "MVP.AX":"Medical Developments","NAN.AX":"Nanosonics"
+  }},
+  tech:{label:"Technology (US)",tickers:{
+    SNAP:"Snap",PINS:"Pinterest",RBLX:"Roblox",PLTR:"Palantir",SOFI:"SoFi",
+    HOOD:"Robinhood",PATH:"UiPath",AI:"C3.ai",SOUN:"SoundHound",ASTS:"AST SpaceMobile",
+    IONQ:"IonQ",WOLF:"Wolfspeed",LAZR:"Luminar",RIVN:"Rivian",LCID:"Lucid",
+    JOBY:"Joby Aviation",ACHR:"Archer Aviation",OPEN:"Opendoor",DKNG:"DraftKings",
+    GENI:"Genius Sports",SPCE:"Virgin Galactic",XPEV:"XPeng",NIO:"NIO",LI:"Li Auto",
+    BLNK:"Blink Charging",CHPT:"ChargePoint",EVGO:"EVgo",FSR:"Fisker",
+    SKLZ:"Skillz",MAPS:"WM Technology"
+  }},
+  general:{label:"Broad Market (US)",tickers:{
+    AAPL:"Apple",TSLA:"Tesla",AMZN:"Amazon",GOOGL:"Alphabet",NVDA:"Nvidia",
+    AMD:"AMD",PFE:"Pfizer",JNJ:"Johnson & Johnson",DIS:"Disney",NFLX:"Netflix",
+    UBER:"Uber",F:"Ford",GM:"General Motors",NKE:"Nike",SBUX:"Starbucks",
+    BA:"Boeing",GE:"GE",INTC:"Intel",META:"Meta",SHOP:"Shopify",
+    PYPL:"PayPal",SQ:"Block",ROKU:"Roku",PTON:"Peloton",DOCU:"DocuSign",
+    LMND:"Lemonade",OSCR:"Oscar Health",ZOOM:"Zoom",WBD:"Warner Bros",PARA:"Paramount"
+  }}
+};
+
+// ── Watchlist ────────────────────────────────────────────────────────────────
+function getWL(){try{return JSON.parse(localStorage.getItem('wl')||'[]')}catch(e){return[]}}
+function saveWL(wl){localStorage.setItem('wl',JSON.stringify(wl))}
+function toggleWL(ticker){
+  let wl=getWL();
+  wl=wl.includes(ticker)?wl.filter(t=>t!==ticker):[...wl,ticker];
+  saveWL(wl);renderWL();renderTable();
+}
+function clearWatchlist(){saveWL([]);renderWL();renderTable()}
+function renderWL(){
+  const wl=getWL();
+  const sec=document.getElementById('watchlistSection');
+  if(!wl.length){sec.style.display='none';return}
+  sec.style.display='block';
+  document.getElementById('wlTags').innerHTML=wl.map(t=>
+    `<div class="wl-tag"><span>${t}</span><span class="wl-remove" onclick="toggleWL('${t}')">×</span></div>`
+  ).join('');
+}
+renderWL();
+
+// ── Sorting ──────────────────────────────────────────────────────────────────
+let currentResults=[],sortKey='score',sortDir=-1;
+function sortBy(key){
+  if(sortKey===key)sortDir*=-1;else{sortKey=key;sortDir=key==='ticker'?1:-1}
+  renderTable();
+}
+
+// ── RSI (FIXED) ──────────────────────────────────────────────────────────────
+function calcRSI(closes,period=14){
+  if(closes.length<period+1)return 50;
+  let g=0,l=0;
+  for(let i=closes.length-period;i<closes.length;i++){
+    const d=closes[i]-closes[i-1];
+    if(d>0)g+=d;else l-=d;
+  }
+  const ag=g/period,al=l/period;
+  if(al===0)return 100;
+  const rs=ag/al;
+  // FIXED: was round(...*10)/10 which broke operator precedence
+  return Math.round((100-100/(1+rs))*10)/10;
+}
+
+function calcSMA(closes,period=20){
+  const s=closes.slice(-period);
+  return s.reduce((a,b)=>a+b,0)/s.length;
+}
+
+function scoreStock(ticker,closes,volumes,name){
+  const n=closes.length;
+  const current=closes[n-1];
+  const monthAgo=closes[Math.max(0,n-22)];
+  const drop=((current-monthAgo)/monthAgo)*100;
+  const rsi=calcRSI(closes);
+  const sma20=calcSMA(closes,20);
+  const pctVsSMA=((current-sma20)/sma20)*100;
+  const rv=volumes.slice(-5).reduce((a,b)=>a+b,0)/5;
+  const av=volumes.slice(-20).reduce((a,b)=>a+b,0)/20;
+  const volSpike=av>0?rv/av:1;
+  let score=0;
+  if(rsi<25)score+=40;else if(rsi<30)score+=32;else if(rsi<40)score+=20;else if(rsi<50)score+=10;
+  if(pctVsSMA<-20)score+=30;else if(pctVsSMA<-15)score+=22;else if(pctVsSMA<-10)score+=15;else if(pctVsSMA<-5)score+=7;
+  if(volSpike>2.5)score+=20;else if(volSpike>2)score+=15;else if(volSpike>1.5)score+=10;else if(volSpike>1.2)score+=5;
+  if(drop<-20)score+=10;else if(drop<-10)score+=6;else if(drop<-5)score+=3;
+  return{ticker,name,current,drop,rsi,sma20,pctVsSMA,volSpike,score:Math.min(score,100),reason:null};
+}
+
+// ── Fetch ────────────────────────────────────────────────────────────────────
+async function fetchTicker(ticker){
+  const end=Math.floor(Date.now()/1000);
+  const start=end-95*24*3600;
+  const yUrl=`https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&period1=${start}&period2=${end}&includePrePost=false`;
+  const proxies=[
+    `https://corsproxy.io/?${encodeURIComponent(yUrl)}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(yUrl)}`
+  ];
+  for(const url of proxies){
+    try{
+      const r=await fetch(url,{signal:AbortSignal.timeout(10000)});
+      if(!r.ok)continue;
+      const txt=await r.text();
+      if(!txt||txt.length<200)continue;
+      const d=JSON.parse(txt);
+      const res=d?.chart?.result?.[0];
+      if(!res)continue;
+      const q=res.indicators?.quote?.[0];
+      if(!q)continue;
+      const pairs=(q.close||[]).map((c,i)=>({c,v:(q.volume||[])[i]||0})).filter(x=>x.c!=null&&x.c>0&&!isNaN(x.c));
+      if(pairs.length<22)continue;
+      return{closes:pairs.map(p=>p.c),volumes:pairs.map(p=>p.v)};
+    }catch(e){continue}
+  }
+  return null;
+}
+
+async function fetchReason(ticker,name,drop){
+  try{
+    const r=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        model:"claude-haiku-4-5-20251001",
+        max_tokens:60,
+        system:"Financial analyst. Reply in max 12 words. Be specific.",
+        messages:[{role:"user",content:`Why did ${name} (${ticker}) drop ~${Math.abs(drop).toFixed(0)}% last month? 12 words max.`}]
+      })
+    });
+    if(!r.ok)return false;
+    const d=await r.json();
+    return d.content?.[0]?.text?.trim()||false;
+  }catch(e){return false}
+}
+
+// ── Render ───────────────────────────────────────────────────────────────────
+function pill(s){
+  if(s>=75)return'<span class="pill pill-s">Strong</span>';
+  if(s>=50)return'<span class="pill pill-m">Moderate</span>';
+  return'<span class="pill pill-w">Weak</span>';
+}
+function barCol(s){return s>=75?'#639922':s>=50?'#BA7517':'#E24B4A'}
+function rsiCol(r){return r<30?'#A32D2D':r<50?'#854F0B':'#555'}
+function rsiBarCol(r){return r<30?'#E24B4A':r<50?'#BA7517':'#639922'}
+
+function renderTable(){
+  const tbody=document.getElementById('tableBody');
+  if(!currentResults.length){tbody.innerHTML='';return}
+  const wl=getWL();
+  const sorted=[...currentResults].sort((a,b)=>{
+    const av=a[sortKey],bv=b[sortKey];
+    if(typeof av==='string')return sortDir*(av<bv?-1:av>bv?1:0);
+    return sortDir*(av-bv);
+  });
+  tbody.innerHTML=sorted.map(s=>{
+    const inWl=wl.includes(s.ticker);
+    const reasonHtml=s.reason===null
+      ?'<span class="reason-loading">Loading...</span>'
+      :s.reason===false
+      ?'<span class="muted" style="font-size:12px">—</span>'
+      :`<span class="reason-cell">${s.reason}</span>`;
+    return`<tr>
+      <td>
+        <a href="https://finance.yahoo.com/quote/${s.ticker}" target="_blank" class="ticker-link">${s.ticker}</a>
+        <span class="co-name">${s.name}</span>
+      </td>
+      <td class="muted">$${s.current.toFixed(2)}</td>
+      <td class="red">${s.drop.toFixed(1)}%</td>
+      <td>
+        <span class="rsi-bar-wrap"><span class="rsi-bar-fill" style="width:${Math.min(s.rsi,100)}%;background:${rsiBarCol(s.rsi)}"></span></span>
+        <span style="color:${rsiCol(s.rsi)};font-weight:500">${s.rsi}</span>
+      </td>
+      <td class="red">${s.pctVsSMA.toFixed(1)}%</td>
+      <td class="${s.volSpike>1.5?'green':s.volSpike>1.2?'amber':'muted'}">${s.volSpike.toFixed(2)}×</td>
+      <td>
+        <span class="bar-wrap"><span class="bar-fill" style="width:${s.score}%;background:${barCol(s.score)}"></span></span>
+        <span class="muted" style="font-size:12px;margin-right:6px">${s.score}</span>
+        ${pill(s.score)}
+      </td>
+      <td>${reasonHtml}</td>
+      <td><button class="wl-btn ${inWl?'saved':''}" onclick="toggleWL('${s.ticker}')">${inWl?'★ Saved':'☆ Watch'}</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderSkeleton(){
+  const tbody=document.getElementById('tableBody');
+  tbody.innerHTML='';
+  for(let i=0;i<8;i++){
+    const tr=document.createElement('tr');
+    tr.innerHTML=[100,55,55,70,60,55,110,150,60].map(w=>
+      `<td><span class="skeleton" style="width:${w}px;height:12px;">&nbsp;</span></td>`
+    ).join('');
+    tbody.appendChild(tr);
+  }
+  document.getElementById('tableCard').style.display='block';
+}
+
+// ── Main scan ────────────────────────────────────────────────────────────────
+async function runScan(){
+  const btn=document.getElementById('scanBtn');
+  const statusEl=document.getElementById('status');
+  const errBox=document.getElementById('errBox');
+  const warnBox=document.getElementById('warnBox');
+  const progressWrap=document.getElementById('progressWrap');
+  const progressFill=document.getElementById('progressFill');
+
+  errBox.innerHTML='';warnBox.innerHTML='';
+  document.getElementById('statsGrid').style.display='none';
+  document.getElementById('legend').style.display='none';
+  currentResults=[];
+
+  const minDrop=parseInt(document.getElementById('dropSel').value);
+  const sector=document.getElementById('sectorSel').value;
+  const {tickers}=SECTORS[sector];
+  const tickerList=Object.keys(tickers);
+
+  btn.disabled=true;
+  progressWrap.style.display='block';
+  progressFill.style.width='0%';
+  renderSkeleton();
+
+  const t0=Date.now();
+  let done=0,failed=0;
+  const results=[];
+
+  await Promise.all(tickerList.map(async ticker=>{
+    const data=await fetchTicker(ticker);
+    done++;
+    progressFill.style.width=Math.round((done/tickerList.length)*100)+'%';
+    statusEl.textContent=`Fetching market data... ${done}/${tickerList.length}`;
+    if(!data){failed++;return}
+    const scored=scoreStock(ticker,data.closes,data.volumes,tickers[ticker]||ticker);
+    if(scored.drop<=-minDrop)results.push(scored);
+  }));
+
+  progressWrap.style.display='none';
+  results.sort((a,b)=>b.score-a.score);
+  const top=results.slice(0,10);
+  const elapsed=((Date.now()-t0)/1000).toFixed(1)+'s';
+
+  document.getElementById('sScanned').textContent=tickerList.length-failed;
+  document.getElementById('sMatched').textContent=results.length;
+  document.getElementById('sRSI').textContent=top.length
+    ?Math.round(top.reduce((a,s)=>a+s.rsi,0)/top.length):'—';
+  document.getElementById('sTime').textContent=elapsed;
+  document.getElementById('statsGrid').style.display='grid';
+
+  if(failed===tickerList.length){
+    errBox.innerHTML=`<div class="err">Could not load any stock data — the CORS proxy may be temporarily down. Wait a minute and try again.</div>`;
+    statusEl.textContent='Scan failed.';
+    document.getElementById('tableCard').style.display='none';
+    btn.disabled=false;
+    return;
+  }
+
+  if(failed>0){
+    warnBox.innerHTML=`<div class="warn">${failed} ticker${failed>1?'s':''} timed out — results based on ${tickerList.length-failed} stocks.</div>`;
+  }
+
+  if(top.length===0){
+    document.getElementById('tableBody').innerHTML=`<tr><td colspan="9"><div class="empty">
+      No stocks dropped more than ${minDrop}% in the past month.<br>
+      Markets may be broadly rising — try lowering the drop threshold to 5%.
+    </div></td></tr>`;
+  } else {
+    currentResults=top;
+    renderTable();
+  }
+
+  const ts=new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'});
+  statusEl.textContent=`Scan complete — ${top.length} candidates. ${ts}`;
+  document.getElementById('tableCard').style.display='block';
+  document.getElementById('legend').style.display='flex';
+  btn.disabled=false;
+
+  // Load AI reasons without blocking the table
+  if(top.length>0){
+    statusEl.textContent=`Scan complete — fetching AI drop reasons...`;
+    await Promise.all(top.map(async s=>{
+      s.reason=await fetchReason(s.ticker,s.name,s.drop);
+      renderTable();
+    }));
+    statusEl.textContent=`Scan complete — ${top.length} candidates. ${ts}`;
+  }
+  renderWL();
+}
+</script>
+</body>
+</html>
