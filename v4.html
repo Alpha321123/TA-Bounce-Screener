@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Stock Research Hub v4</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f7f7f5;color:#1a1a1a;min-height:100vh;display:flex;flex-direction:column}
+/* ── Market switcher bar ── */
+.mkt-bar{background:#1a1a1a;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;height:40px;flex-shrink:0}
+.mkt-tabs{display:flex;gap:0}
+.mkt-tab{padding:0 18px;height:40px;display:flex;align-items:center;font-size:13px;cursor:pointer;color:#aaa;border-bottom:2px solid transparent;transition:all 0.15s}
+.mkt-tab.active{color:#fff;border-bottom-color:#378ADD}
+.mkt-tab:hover{color:#ddd}
+.mkt-right{display:flex;align-items:center;gap:16px}
+.clock-block{text-align:right}
+.clock-date{font-size:10px;color:#888;letter-spacing:0.04em}
+.clock-time{font-size:13px;font-weight:500;font-variant-numeric:tabular-nums;color:#ddd}
+.mkt-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;padding:2px 8px;border-radius:8px}
+.mo{background:#1D9E7520;color:#5DCAA5}.mc{background:#E24B4A20;color:#F09595}.mp{background:#EF9F2720;color:#FAC775}
+.dot{width:5px;height:5px;border-radius:50%}.do{background:#5DCAA5}.dc{background:#F09595}.dp{background:#FAC775}
+/* ── Layout ── */
+.shell{display:flex;flex:1;min-height:0}
+.sidebar{width:190px;background:#fff;border-right:1px solid #e8e8e5;flex-shrink:0;position:sticky;top:40px;height:calc(100vh - 40px);overflow-y:auto;display:flex;flex-direction:column}
+.content{flex:1;min-width:0;padding:1.5rem 2rem;overflow-y:auto}
+.page{display:none}.page.active{display:block}
+/* ── Sidebar ── */
+.nav-sec{padding:10px 0 2px}
+.nav-lbl{font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:0.06em;padding:0 14px;margin-bottom:3px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 14px;font-size:13px;color:#555;cursor:pointer;border-left:2px solid transparent}
+.nav-item:hover{background:#f7f7f5;color:#1a1a1a}
+.nav-item.active{background:#EFF6FF;color:#185FA5;border-left-color:#378ADD;font-weight:500}
+.nav-icon{font-size:14px;width:16px;text-align:center}
+.nav-div{height:1px;background:#f0f0ec;margin:6px 0}
+.export-btn{margin:auto 14px 14px;padding:7px 12px;background:#f7f7f5;border:1px solid #e8e8e5;border-radius:8px;font-size:12px;cursor:pointer;text-align:center;color:#555}
+.export-btn:hover{background:#eee}
+/* ── Glossary ── */
+.g-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.3);z-index:200}
+.g-overlay.open{display:block}
+.g-panel{position:fixed;right:0;top:0;bottom:0;width:380px;background:#fff;box-shadow:-4px 0 20px rgba(0,0,0,0.1);z-index:201;display:flex;flex-direction:column;transform:translateX(100%);transition:transform 0.25s}
+.g-panel.open{transform:translateX(0)}
+.g-head{padding:1.1rem 1.4rem;border-bottom:1px solid #e8e8e5;display:flex;justify-content:space-between;align-items:center}
+.g-head h2{font-size:15px;font-weight:500}
+.g-body{flex:1;overflow-y:auto;padding:1rem 1.4rem}
+.g-search{width:100%;padding:7px 11px;border:1px solid #ddd;border-radius:8px;font-size:13px;margin-bottom:1rem}
+.g-item{margin-bottom:1.1rem;padding-bottom:1.1rem;border-bottom:1px solid #f0f0ec}
+.g-item:last-child{border-bottom:none}
+.g-term{font-size:13px;font-weight:600;margin-bottom:3px;display:flex;align-items:center;gap:7px}
+.g-def{font-size:12px;color:#555;line-height:1.6}
+.g-link{display:inline-block;margin-top:5px;font-size:11px;color:#378ADD;text-decoration:none}
+.g-link:hover{text-decoration:underline}
+.g-tag{font-size:10px;padding:1px 6px;border-radius:4px;font-weight:400}
+.t-ta{background:#EEEDFE;color:#534AB7}.t-fund{background:#E1F5EE;color:#085041}.t-risk{background:#FCEBEB;color:#791F1F}
+/* ── Common UI ── */
+select,button,input{font-family:inherit}
+.btn{font-size:13px;border-radius:8px;border:1px solid #ddd;padding:6px 13px;background:#fff;color:#1a1a1a;cursor:pointer}
+.btn:hover{background:#f7f7f5}.btn:disabled{opacity:0.4;cursor:not-allowed}
+.btn-primary{background:#1a1a1a;color:#fff;border-color:#1a1a1a}.btn-primary:hover{background:#333}
+.btn-green{background:#EAF3DE;color:#27500A;border-color:#9FE1CB}
+.btn-red{background:#FCEBEB;color:#791F1F;border-color:#F09595}
+.btn-blue{background:#E6F1FB;color:#0C447C;border-color:#85B7EB}
+.btn-sm{padding:3px 9px;font-size:12px}
+input[type=text],input[type=number],input[type=date],select{border:1px solid #ddd;border-radius:8px;padding:6px 10px;font-size:13px;background:#fff;color:#1a1a1a;outline:none}
+input:focus,select:focus{border-color:#378ADD;box-shadow:0 0 0 2px #378ADD25}
+.card{background:#fff;border:1px solid #e8e8e5;border-radius:12px;overflow:hidden;margin-bottom:1rem}
+.card-head{padding:.9rem 1.2rem;border-bottom:1px solid #e8e8e5;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.card-head h3{font-size:14px;font-weight:500}
+.card-body{padding:1.1rem 1.2rem}
+.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1rem}
+.sg2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:1rem}
+.stat{background:#fff;border:1px solid #e8e8e5;border-radius:10px;padding:.85rem 1rem}
+.stat-lbl{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.stat-val{font-size:20px;font-weight:500}
+.stat-sub{font-size:11px;color:#aaa;margin-top:2px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-size:11px;font-weight:500;color:#888;text-transform:uppercase;letter-spacing:.05em;padding:8px 11px;border-bottom:1px solid #e8e8e5;background:#fafaf8;white-space:nowrap;cursor:pointer;user-select:none}
+th:hover{color:#333}
+td{padding:9px 11px;border-bottom:1px solid #f0f0ec;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafaf8}
+.tlink{font-weight:600;color:#1a1a1a;text-decoration:none}.tlink:hover{color:#378ADD}
+.cname{font-size:11px;color:#888;display:block;margin-top:1px}
+.red{color:#A32D2D;font-weight:500}.green{color:#3B6D11;font-weight:500}.amber{color:#854F0B}.muted{color:#888}
+.pill{display:inline-block;font-size:11px;padding:2px 7px;border-radius:10px;font-weight:500}
+.pill-s{background:#EAF3DE;color:#27500A}.pill-m{background:#FAEEDA;color:#633806}.pill-w{background:#FCEBEB;color:#791F1F}.pill-b{background:#E6F1FB;color:#0C447C}
+.bw{display:inline-block;width:54px;height:6px;background:#eee;border-radius:3px;overflow:hidden;vertical-align:middle;margin-right:5px}
+.bf{height:100%;border-radius:3px}
+.skel{background:#eee;border-radius:3px;display:inline-block;animation:pulse 1.3s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.empty{padding:2.5rem;text-align:center;color:#aaa;font-size:14px;line-height:1.9}
+.prog-w{height:3px;background:#eee;border-radius:2px;margin-bottom:.7rem;overflow:hidden;display:none}
+.prog-f{height:100%;background:#378ADD;border-radius:2px;transition:width .3s}
+.sbar{font-size:12px;color:#888;margin-bottom:.7rem;min-height:18px}
+.err{background:#FCEBEB;border-radius:10px;padding:.8rem 1rem;color:#791F1F;font-size:13px;margin-bottom:.75rem}
+.warn{background:#FAEEDA;border-radius:10px;padding:.65rem 1rem;font-size:12px;color:#633806;margin-bottom:.6rem}
+.info{background:#E6F1FB;border-radius:10px;padding:.65rem 1rem;font-size:12px;color:#0C447C;margin-bottom:.75rem;line-height:1.6}
+.ptitle{font-size:20px;font-weight:500;margin-bottom:3px}
+.psub{font-size:13px;color:#888;margin-bottom:1.1rem}
+.fr{display:flex;gap:9px;align-items:flex-end;flex-wrap:wrap;margin-bottom:.9rem}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg label{font-size:12px;color:#555;font-weight:500}
+.badge-au{display:inline-block;background:#E1F5EE;color:#085041;font-size:10px;padding:1px 5px;border-radius:4px;font-weight:500;margin-left:3px}
+.badge-us{display:inline-block;background:#E6F1FB;color:#0C447C;font-size:10px;padding:1px 5px;border-radius:4px;font-weight:500;margin-left:3px}
+.bot-bar{height:7px;border-radius:4px;flex:1;background:#eee;overflow:hidden}
+.bot-fill{height:100%;border-radius:4px}
+.sell-sig{display:inline-block;font-size:11px;padding:2px 7px;border-radius:8px;font-weight:500}
+.ss-h{background:#E6F1FB;color:#0C447C}.ss-c{background:#FAEEDA;color:#633806}.ss-s{background:#FCEBEB;color:#791F1F}
+.vol-bar{height:5px;border-radius:3px;background:#eee;overflow:hidden;width:60px;display:inline-block;vertical-align:middle;margin-right:5px}
+.vol-fill{height:100%;border-radius:3px;background:#378ADD}
+.suggest-box{background:#EAF3DE;border-radius:8px;padding:5px 9px;font-size:12px;color:#27500A;margin-top:4px;display:inline-block}
+@media(max-width:768px){.sidebar{display:none}.content{padding:1rem}.sg{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<!-- Market switcher bar -->
+<div class="mkt-bar">
+  <div class="mkt-tabs">
+    <div class="mkt-tab active" id="tab-au" onclick="switchMarket('AU')">🇦🇺 Australian (ASX)</div>
+    <div class="mkt-tab" id="tab-us" onclick="switchMarket('US')">🇺🇸 US Markets</div>
+  </div>
+  <div class="mkt-right">
+    <div id="mktBadges" style="display:flex;gap:8px"></div>
+    <div class="clock-block" id="clockBlock"></div>
+    <button class="btn btn-sm" style="background:transparent;color:#aaa;border-color:#444" onclick="toggleGlossary()">Glossary</button>
+  </div>
+</div>
+
+<div class="shell">
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="nav-sec">
+    <div class="nav-lbl">Research</div>
+    <div class="nav-item active" onclick="nav('screener')"><span class="nav-icon">🔍</span>Screener</div>
+    <div class="nav-item" onclick="nav('search')"><span class="nav-icon">📊</span>Stock search</div>
+    <div class="nav-item" onclick="nav('ipo')"><span class="nav-icon">🚀</span>IPO tracker</div>
+  </div>
+  <div class="nav-div"></div>
+  <div class="nav-sec">
+    <div class="nav-lbl">Portfolio</div>
+    <div class="nav-item" onclick="nav('portfolio')"><span class="nav-icon">💼</span>My portfolio</div>
+    <div class="nav-item" onclick="nav('history')"><span class="nav-icon">📋</span>Trade history</div>
+    <div class="nav-item" onclick="nav('paper')"><span class="nav-icon">🎮</span>Paper trading</div>
+    <div class="nav-item" onclick="nav('sim')"><span class="nav-icon">🤖</span>Auto-simulation</div>
+  </div>
+  <div class="nav-div"></div>
+  <div class="nav-sec">
+    <div class="nav-lbl">Data</div>
+    <div class="nav-item" onclick="exportData()"><span class="nav-icon">⬆️</span>Export data</div>
+    <div class="nav-item" onclick="document.getElementById('importFile').click()"><span class="nav-icon">⬇️</span>Import data</div>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(this)">
+  </div>
+</div>
+
+<!-- Content -->
+<div class="content">
+
+<!-- SCREENER -->
+<div class="page active" id="page-screener">
+  <div class="ptitle">TA Bounce Screener <span id="mktLabel" class="badge-au">ASX</span></div>
+  <div class="psub">Stocks with sharp recent drops and high bounce potential. Volume and liquidity weighted.</div>
+  <div class="fr">
+    <div class="fg"><label>Sector</label><select id="sectorSel" onchange="updateSectorOptions()"></select></div>
+    <div class="fg"><label>Min drop</label><select id="dropSel"><option value="5">Drop &gt;5%</option><option value="10" selected>Drop &gt;10%</option><option value="15">Drop &gt;15%</option><option value="20">Drop &gt;20%</option></select></div>
+    <div class="fg"><label>Min vol (K/day)</label><select id="volSel"><option value="0">Any volume</option><option value="100">100K+</option><option value="500" selected>500K+</option><option value="1000">1M+</option></select></div>
+    <button class="btn btn-primary" id="scanBtn" onclick="runScan()">Scan now</button>
+  </div>
+  <div class="info">
+    <strong>Bounce score:</strong> RSI&lt;30 (40pts) + below SMA20 (30pts) + vol spike (20pts) + drop size (10pts). <strong>Liquidity score</strong> adjusts for volume — low-volume stocks are penalised even with good signals, because thin markets mean price moves won't be noticed or sustained. <strong>Near bottom</strong> shows proximity to 52-week low.
+  </div>
+  <div class="prog-w" id="sp"><div class="prog-f" id="spf" style="width:0%"></div></div>
+  <div class="sbar" id="ss">Select sector and press Scan now.</div>
+  <div id="serr"></div><div id="swarn"></div>
+  <div class="sg" id="scanStats" style="display:none">
+    <div class="stat"><div class="stat-lbl">Loaded</div><div class="stat-val" id="stL">—</div></div>
+    <div class="stat"><div class="stat-lbl">Matched</div><div class="stat-val" id="stM">—</div></div>
+    <div class="stat"><div class="stat-lbl">Avg RSI</div><div class="stat-val" id="stR">—</div></div>
+    <div class="stat"><div class="stat-lbl">Scan time</div><div class="stat-val" id="stT">—</div></div>
+  </div>
+  <div id="scLegend" style="display:none;display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:#888;margin-bottom:.7rem">
+    <span><span class="pill pill-s">Strong</span> 75+</span><span><span class="pill pill-m">Moderate</span> 50–74</span><span><span class="pill pill-w">Weak</span> &lt;50</span>
+    <span class="muted">Liquidity: bar = avg daily vol · Near bottom: proximity to 52-wk low</span>
+  </div>
+  <div class="card" id="scanCard" style="display:none"><div style="overflow-x:auto">
+    <table><thead><tr>
+      <th onclick="sortSc('ticker')">Ticker ↕</th>
+      <th onclick="sortSc('current')">Price ↕</th>
+      <th onclick="sortSc('drop')">1M drop ↕</th>
+      <th onclick="sortSc('rsi')">RSI ↕</th>
+      <th onclick="sortSc('pctVsSMA')">vs SMA20 ↕</th>
+      <th onclick="sortSc('volSpike')">Vol spike ↕</th>
+      <th>Liquidity</th>
+      <th onclick="sortSc('score')">Score ↕</th>
+      <th>Near bottom</th>
+      <th>Sell signal</th>
+      <th>Drop reason</th>
+      <th>Actions</th>
+    </tr></thead>
+    <tbody id="scanBody"></tbody></table>
+  </div></div>
+</div>
+
+<!-- SEARCH -->
+<div class="page" id="page-search">
+  <div class="ptitle">Stock search</div>
+  <div class="psub">Analyse any ticker for technical signals, bottom proximity, and share quantity suggestion.</div>
+  <div class="fr">
+    <div class="fg"><label>Ticker (add .AX for ASX)</label><input type="text" id="searchTicker" placeholder="e.g. CSL.AX or MRNA" style="width:200px" onkeydown="if(event.key==='Enter')searchStock()"></div>
+    <button class="btn btn-primary" onclick="searchStock()">Analyse</button>
+  </div>
+  <div class="sbar" id="searchStatus"></div>
+  <div id="searchResult"></div>
+</div>
+
+<!-- IPO -->
+<div class="page" id="page-ipo">
+  <div class="ptitle">IPO tracker</div>
+  <div class="psub">Recent and upcoming IPOs on ASX and US markets.</div>
+  <div class="info"><strong>What is an IPO?</strong> Initial Public Offering — a private company sells shares to the public for the first time. Early investors can profit if the stock rises. But: many IPOs drop below listing price within months. Risks include hype-driven pricing and lock-up expiry (when insiders can sell). Strategy: wait 1–3 months post-listing before buying to see how the stock settles. Read the prospectus. For ASX IPOs: <a href="https://www2.asx.com.au/investors/investment-tools-and-resources/investment-options/shares/ipos" target="_blank" style="color:#0C447C">ASX.com.au</a>. For US: <a href="https://stockanalysis.com/ipos/" target="_blank" style="color:#0C447C">StockAnalysis.com</a>.</div>
+  <div class="card"><div class="card-head"><h3>Recent &amp; upcoming IPOs</h3></div><div class="card-body" id="ipoBody"><div class="empty">Loading...</div></div></div>
+</div>
+
+<!-- PORTFOLIO -->
+<div class="page" id="page-portfolio">
+  <div class="ptitle">My portfolio (real money)</div>
+  <div class="psub">Record real trades. CommSec brokerage applied: $10 or 0.12% (whichever greater) per trade.</div>
+  <div class="card"><div class="card-head"><h3>Add position</h3></div><div class="card-body">
+    <div class="fr">
+      <div class="fg"><label>Ticker</label><input type="text" id="ptT" placeholder="CSL.AX" style="width:110px"></div>
+      <div class="fg"><label>Shares</label><input type="number" id="ptS" placeholder="10" style="width:90px" min="1"></div>
+      <div class="fg"><label>Buy price ($)</label><input type="number" id="ptP" placeholder="280.00" style="width:105px" step="0.01"></div>
+      <div class="fg"><label>Date</label><input type="date" id="ptD" style="width:135px"></div>
+      <button class="btn btn-primary" onclick="addPosition()">Add</button>
+    </div>
+    <div class="sbar" id="ptStatus"></div>
+  </div></div>
+  <div class="sg" id="pfStats" style="display:none">
+    <div class="stat"><div class="stat-lbl">Invested</div><div class="stat-val" id="pfInv">—</div><div class="stat-sub">incl. brokerage</div></div>
+    <div class="stat"><div class="stat-lbl">Current value</div><div class="stat-val" id="pfVal">—</div></div>
+    <div class="stat"><div class="stat-lbl">Total P&amp;L</div><div class="stat-val" id="pfPnl">—</div></div>
+    <div class="stat"><div class="stat-lbl">Positions</div><div class="stat-val" id="pfCnt">—</div></div>
+  </div>
+  <div class="card" id="pfCard" style="display:none"><div class="card-head"><h3>Open positions</h3><button class="btn btn-sm" onclick="refreshPortfolio()">Refresh prices</button></div>
+    <div style="overflow-x:auto"><table><thead><tr><th>Ticker</th><th>Shares</th><th>Buy</th><th>Brokerage</th><th>Current</th><th>P&amp;L $</th><th>P&amp;L %</th><th>Sell signal</th><th>Actions</th></tr></thead>
+    <tbody id="pfBody"></tbody></table></div>
+  </div>
+</div>
+
+<!-- HISTORY -->
+<div class="page" id="page-history">
+  <div class="ptitle">Trade history</div>
+  <div class="psub">All closed trades with P&amp;L tracking. Export to carry forward to new site versions.</div>
+  <div class="card"><div class="card-head"><h3>Record closed trade</h3></div><div class="card-body">
+    <div class="fr">
+      <div class="fg"><label>Ticker</label><input type="text" id="htT" placeholder="CSL.AX" style="width:100px"></div>
+      <div class="fg"><label>Shares</label><input type="number" id="htS" style="width:85px"></div>
+      <div class="fg"><label>Buy $</label><input type="number" id="htB" style="width:90px" step="0.01"></div>
+      <div class="fg"><label>Sell $</label><input type="number" id="htSl" style="width:90px" step="0.01"></div>
+      <div class="fg"><label>Buy date</label><input type="date" id="htBD" style="width:130px"></div>
+      <div class="fg"><label>Sell date</label><input type="date" id="htSD" style="width:130px"></div>
+      <button class="btn btn-primary" onclick="addHistory()">Record</button>
+    </div>
+  </div></div>
+  <div class="sg" id="htStats" style="display:none">
+    <div class="stat"><div class="stat-lbl">Total trades</div><div class="stat-val" id="htTot">—</div></div>
+    <div class="stat"><div class="stat-lbl">Winners</div><div class="stat-val green" id="htW">—</div></div>
+    <div class="stat"><div class="stat-lbl">Net profit</div><div class="stat-val" id="htP">—</div></div>
+    <div class="stat"><div class="stat-lbl">Win rate</div><div class="stat-val" id="htR">—</div></div>
+  </div>
+  <div class="card" id="htCard" style="display:none"><div style="overflow-x:auto">
+    <table><thead><tr><th>Ticker</th><th>Shares</th><th>Buy $</th><th>Sell $</th><th>Brokerage</th><th>Profit</th><th>Return %</th><th>Days held</th><th>Dates</th><th></th></tr></thead>
+    <tbody id="htBody"></tbody></table>
+  </div></div>
+</div>
+
+<!-- PAPER TRADING -->
+<div class="page" id="page-paper">
+  <div class="ptitle">Paper trading simulator</div>
+  <div class="psub">Virtual money. CommSec brokerage simulated. Date/time recorded for every trade.</div>
+  <div class="info">Practice your strategy with no real risk. Discipline matters — treat it as real money. Each trade logs the exact date and time.</div>
+  <div class="card"><div class="card-head"><h3>Virtual account settings</h3>
+    <div style="display:flex;gap:8px;align-items:center">
+      <label style="font-size:12px;color:#555">Starting cash $</label>
+      <input type="number" id="ppStartCash" style="width:110px" step="100">
+      <button class="btn btn-sm btn-blue" onclick="setPaperCash()">Update</button>
+      <button class="btn btn-sm" onclick="refreshPaper()">Refresh prices</button>
+      <button class="btn btn-sm btn-red" onclick="resetPaper()">Reset</button>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="sg">
+      <div class="stat"><div class="stat-lbl">Cash available</div><div class="stat-val" id="ppCash">—</div></div>
+      <div class="stat"><div class="stat-lbl">Portfolio value</div><div class="stat-val" id="ppPort">—</div></div>
+      <div class="stat"><div class="stat-lbl">Total P&amp;L</div><div class="stat-val" id="ppPnl">—</div></div>
+      <div class="stat"><div class="stat-lbl">Return %</div><div class="stat-val" id="ppRet">—</div></div>
+    </div>
+  </div></div>
+  <div class="card"><div class="card-head"><h3>Place virtual trade</h3></div><div class="card-body">
+    <div class="fr">
+      <div class="fg"><label>Ticker</label><input type="text" id="ppT" placeholder="CSL.AX" style="width:110px"></div>
+      <div class="fg"><label>Shares</label><input type="number" id="ppS" placeholder="10" style="width:85px" min="1"></div>
+      <div class="fg"><label>Action</label><select id="ppA"><option value="buy">Buy</option><option value="sell">Sell</option></select></div>
+      <button class="btn btn-primary" onclick="paperTrade()">Execute</button>
+    </div>
+    <div class="sbar" id="ppStatus"></div>
+  </div></div>
+  <div class="card" id="ppCard" style="display:none"><div class="card-head"><h3>Virtual positions</h3></div>
+    <div style="overflow-x:auto"><table><thead><tr><th>Ticker</th><th>Shares</th><th>Avg buy</th><th>Current</th><th>P&amp;L $</th><th>P&amp;L %</th><th>Sell signal</th><th>Suggestion</th><th></th></tr></thead>
+    <tbody id="ppBody"></tbody></table></div>
+  </div>
+  <div class="card" id="ppHistCard" style="display:none"><div class="card-head"><h3>Paper trade log</h3></div>
+    <div style="overflow-x:auto"><table><thead><tr><th>Date &amp; time</th><th>Ticker</th><th>Action</th><th>Shares</th><th>Price</th><th>Brokerage</th><th>Total</th></tr></thead>
+    <tbody id="ppHistBody"></tbody></table></div>
+  </div>
+</div>
+
+<!-- AUTO-SIMULATION -->
+<div class="page" id="page-sim">
+  <div class="ptitle">Auto-simulation</div>
+  <div class="psub">Simulates buying all stocks with bounce score &gt;80 and selling when sell signal triggers. Tests strategy efficiency.</div>
+  <div class="info"><strong>How it works:</strong> Every time you run a scan, the simulation checks if any stock had score &gt;80 on that day. It "buys" at the current price and "sells" when RSI exceeds 65 or price is 15%+ above SMA20. All history is recorded. This tells you whether the bounce score strategy would have been profitable. <strong>Note:</strong> Past simulation results do not guarantee future returns.</div>
+  <div class="fr">
+    <div class="fg"><label>Simulation cash ($)</label><input type="number" id="simCash" value="10000" style="width:120px"></div>
+    <div class="fg"><label>Max per trade ($)</label><input type="number" id="simMaxTrade" value="2000" style="width:120px"></div>
+    <button class="btn btn-primary" onclick="runSimScan()">Scan &amp; simulate</button>
+    <button class="btn btn-sm btn-red" onclick="resetSim()">Reset simulation</button>
+  </div>
+  <div class="sbar" id="simStatus"></div>
+  <div class="sg" id="simStats" style="display:none">
+    <div class="stat"><div class="stat-lbl">Starting cash</div><div class="stat-val" id="simS">—</div></div>
+    <div class="stat"><div class="stat-lbl">Current value</div><div class="stat-val" id="simV">—</div></div>
+    <div class="stat"><div class="stat-lbl">Net gain/loss</div><div class="stat-val" id="simG">—</div></div>
+    <div class="stat"><div class="stat-lbl">Win rate</div><div class="stat-val" id="simWR">—</div></div>
+  </div>
+  <div class="card" id="simPosCard" style="display:none"><div class="card-head"><h3>Open simulated positions</h3></div>
+    <div style="overflow-x:auto"><table><thead><tr><th>Ticker</th><th>Bought</th><th>Buy price</th><th>Current</th><th>P&amp;L</th><th>Score at buy</th><th>Sell signal</th></tr></thead>
+    <tbody id="simPosBody"></tbody></table></div>
+  </div>
+  <div class="card" id="simHistCard" style="display:none"><div class="card-head"><h3>Simulation trade history</h3></div>
+    <div style="overflow-x:auto"><table><thead><tr><th>Ticker</th><th>Buy date</th><th>Sell date</th><th>Buy $</th><th>Sell $</th><th>Brokerage</th><th>Profit</th><th>Return %</th></tr></thead>
+    <tbody id="simHistBody"></tbody></table></div>
+  </div>
+</div>
+
+</div><!-- end content -->
+</div><!-- end shell -->
+
+<!-- Glossary -->
+<div class="g-overlay" id="gOverlay" onclick="toggleGlossary()"></div>
+<div class="g-panel" id="gPanel">
+  <div class="g-head"><h2>Glossary &amp; Learn</h2><button style="background:none;border:none;font-size:20px;cursor:pointer;color:#888" onclick="toggleGlossary()">×</button></div>
+  <div class="g-body">
+    <input class="g-search" type="text" placeholder="Search terms..." oninput="filterGloss(this.value)">
+    <div id="glossItems"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════
+const PAPER_DEFAULT=10000;
+const BROK_AU_MIN=10,BROK_AU_PCT=0.0012;   // CommSec AU
+const BROK_US_MIN=19.95,BROK_US_PCT=0.0031; // CommSec US
+function brokerage(value,isAU){
+  if(isAU)return Math.max(BROK_AU_MIN,value*BROK_AU_PCT);
+  return Math.max(BROK_US_MIN,value*BROK_US_PCT);
+}
+function fmtMoney(v){return(v<0?'-':'')+'$'+Math.abs(v).toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function fmtDT(d){return new Date(d).toLocaleString('en-AU',{day:'2-digit',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'})}
+
+// ═══════════════════════════════════
+// MARKET DATA
+// ═══════════════════════════════════
+let currentMarket='AU';
+
+const SECTORS={
+  AU:{
+    'Biotech/Pharma':{tickers:{'CSL.AX':'CSL','PNV.AX':'PolyNovo','IMM.AX':'Immutep','NEU.AX':'Neuren','RMD.AX':'ResMed','COH.AX':'Cochlear','SHL.AX':'Sonic Healthcare','TLX.AX':'Telix Pharma','PYC.AX':'PYC Therapeutics','OPT.AX':'Opthea','AVH.AX':'Avita Medical','RAC.AX':'Race Oncology','EBR.AX':'EBR Systems','NAN.AX':'Nanosonics','PRO.AX':'Pro Medicus','MVP.AX':'Medical Developments','PAB.AX':'Patrys','1AD.AX':'Adalta','SOM.AX':'SomnoMed','IHL.AX':'Impedimed'}},
+    'Mining/Resources':{tickers:{'BHP.AX':'BHP','RIO.AX':'Rio Tinto','FMG.AX':'Fortescue','S32.AX':'South32','OZL.AX':'OZ Minerals','IGO.AX':'IGO','PLS.AX':'Pilbara Minerals','MIN.AX':'Mineral Resources','LYC.AX':'Lynas Rare Earths','ILU.AX':'Iluka Resources','SFR.AX':'Sandfire','NST.AX':'Northern Star','EVN.AX':'Evolution Mining','NCM.AX':'Newcrest','RRL.AX':'Regis Resources','WSA.AX':'Western Areas','OGC.AX':'OceanaGold','SAR.AX':'Saracen','GOR.AX':'Gold Road','CMM.AX':'Capricorn Metals'}},
+    'Technology':{tickers:{'WTC.AX':'WiseTech Global','XRO.AX':'Xero','APX.AX':'Appen','ALU.AX':'Altium','TNE.AX':'TechnologyOne','MP1.AX':'Megaport','DDR.AX':'Dicker Data','CAT.AX':'Catapult','BVS.AX':'Bravura','SXL.AX':'Southern Cross','SEK.AX':'SEEK','CAR.AX':'CarSales','REA.AX':'REA Group','IFM.AX':'Infomedia','DTL.AX':'Data#3','HUB.AX':'Hub24','NXT.AX':'NEXTDC','DXS.AX':'Dexus','MFG.AX':'Magellan','AMP.AX':'AMP'}},
+    'Finance/Banks':{tickers:{'CBA.AX':'Commonwealth Bank','WBC.AX':'Westpac','NAB.AX':'NAB','ANZ.AX':'ANZ','MQG.AX':'Macquarie','SUN.AX':'Suncorp','IAG.AX':'Insurance Australia','QBE.AX':'QBE Insurance','ASX.AX':'ASX Ltd','PPT.AX':'Perpetual','PTM.AX':'Platinum Asset','AMP.AX':'AMP','BEN.AX':'Bendigo Bank','BOQ.AX':'Bank of Queensland','HGH.AX':'Heartland Group','MYS.AX':'Mystate','GQG.AX':'GQG Partners','CNI.AX':'Centuria Capital','APE.AX':'Eagers Automotive','LNK.AX':'Link Admin'}},
+    'Energy':{tickers:{'WPL.AX':'Woodside','STO.AX':'Santos','OSH.AX':'Oil Search','BPT.AX':'Beach Energy','KAR.AX':'Karoon Energy','VEA.AX':'Viva Energy','NHC.AX':'New Hope Coal','WHC.AX':'Whitehaven Coal','MDL.AX':'Mineral Deposits','ALD.AX':'Ampol','AWC.AX':'Alumina','COE.AX':'Cooper Energy','GAS.AX':'Gas2Grid','REC.AX':'Recharge Metals','NHT.AX':'Natural Health','PAN.AX':'Panoramic','SMR.AX':'Stanmore Coal','TER.AX':'Terracom','STX.AX':'Strike Energy','HZN.AX':'Horizon Oil'}},
+    'All ASX sectors':{tickers:{}}
+  },
+  US:{
+    'Biotech/Pharma':{tickers:{MRNA:'Moderna',NVAX:'Novavax',BNTX:'BioNTech',SRPT:'Sarepta',IONS:'Ionis',BLUE:'bluebird bio',BEAM:'Beam Therapeutics',EDIT:'Editas',CRSP:'CRISPR Tx',ALNY:'Alnylam',ARWR:'Arrowhead',ACAD:'Acadia',KYMR:'Kymera',RCKT:'Rocket Pharma',RARE:'Ultragenyx',FOLD:'Amicus',DNLI:'Denali',NTLA:'Intellia',PRAX:'Praxis',SGMO:'Sangamo',VRTX:'Vertex',BMRN:'BioMarin',INSM:'Insmed',EXAS:'Exact Sciences',NKTR:'Nektar',FATE:'Fate Tx',HALO:'Halozyme',REGN:'Regeneron',SGEN:'Seagen',RETA:'Reata'}},
+    'Technology':{tickers:{SNAP:'Snap',PINS:'Pinterest',RBLX:'Roblox',PLTR:'Palantir',SOFI:'SoFi',HOOD:'Robinhood',PATH:'UiPath',AI:'C3.ai',SOUN:'SoundHound',ASTS:'AST SpaceMobile',IONQ:'IonQ',WOLF:'Wolfspeed',LAZR:'Luminar',RIVN:'Rivian',LCID:'Lucid',JOBY:'Joby',ACHR:'Archer',OPEN:'Opendoor',DKNG:'DraftKings',SPCE:'Virgin Galactic',XPEV:'XPeng',NIO:'NIO',BLNK:'Blink Charging',CHPT:'ChargePoint',EVGO:'EVgo',SKLZ:'Skillz',FSR:'Fisker',GENI:'Genius Sports',MAPS:'WM Tech',BIRD:'Bird'}},
+    'Broad Market':{tickers:{AAPL:'Apple',TSLA:'Tesla',AMZN:'Amazon',GOOGL:'Alphabet',NVDA:'Nvidia',AMD:'AMD',PFE:'Pfizer',JNJ:'J&J',DIS:'Disney',NFLX:'Netflix',UBER:'Uber',F:'Ford',GM:'GM',NKE:'Nike',SBUX:'Starbucks',BA:'Boeing',GE:'GE',INTC:'Intel',META:'Meta',SHOP:'Shopify',PYPL:'PayPal',SQ:'Block',ROKU:'Roku',PTON:'Peloton',DOCU:'DocuSign',LMND:'Lemonade',ZOOM:'Zoom',WBD:'Warner Bros',PARA:'Paramount',OSCR:'Oscar Health'}},
+    'Finance':{tickers:{JPM:'JPMorgan',BAC:'Bank of America',WFC:'Wells Fargo',GS:'Goldman Sachs',MS:'Morgan Stanley',C:'Citigroup',AXP:'Amex',V:'Visa',MA:'Mastercard',PYPL:'PayPal',SQ:'Block',SOFI:'SoFi',HOOD:'Robinhood',AFRM:'Affirm',UPST:'Upstart',LC:'LendingClub',NU:'Nubank',DAVE:'Dave',CURO:'Curo',MQ:'Macquarie US'}},
+    'Energy':{tickers:{XOM:'Exxon',CVX:'Chevron',COP:'ConocoPhillips',SLB:'Schlumberger',HAL:'Halliburton',OXY:'Occidental',MPC:'Marathon',PSX:'Phillips 66',VLO:'Valero',PXD:'Pioneer',DVN:'Devon',FANG:'Diamondback',APA:'APA Corp',CTRA:'Coterra',AR:'Antero',EQT:'EQT',RRC:'Range Resources',SM:'SM Energy',VTLE:'Vital Energy',HES:'Hess'}},
+    'All US sectors':{tickers:{}}
+  }
+};
+
+// Build "All" sectors
+function buildAll(){
+  let au={},us={};
+  Object.values(SECTORS.AU).forEach(s=>{if(s.tickers&&Object.keys(s.tickers).length)Object.assign(au,s.tickers)});
+  Object.values(SECTORS.US).forEach(s=>{if(s.tickers&&Object.keys(s.tickers).length)Object.assign(us,s.tickers)});
+  SECTORS.AU['All ASX sectors'].tickers=au;
+  SECTORS.US['All US sectors'].tickers=us;
+}
+buildAll();
+
+function updateSectorOptions(){
+  const sel=document.getElementById('sectorSel');
+  const prev=sel.value;
+  sel.innerHTML='';
+  Object.keys(SECTORS[currentMarket]).forEach(k=>{
+    const o=document.createElement('option');o.value=k;o.textContent=k;sel.appendChild(o);
+  });
+  if(prev&&SECTORS[currentMarket][prev])sel.value=prev;
+}
+
+function switchMarket(mkt){
+  currentMarket=mkt;
+  document.getElementById('tab-au').classList.toggle('active',mkt==='AU');
+  document.getElementById('tab-us').classList.toggle('active',mkt==='US');
+  const lbl=document.getElementById('mktLabel');
+  if(lbl){lbl.className=mkt==='AU'?'badge-au':'badge-us';lbl.textContent=mkt==='AU'?'ASX':'US';}
+  updateSectorOptions();
+}
+
+// ═══════════════════════════════════
+// CLOCK
+// ═══════════════════════════════════
+function updateClock(){
+  const now=new Date();
+  const aest=new Date(now.toLocaleString('en-US',{timeZone:'Australia/Brisbane'}));
+  const nyc=new Date(now.toLocaleString('en-US',{timeZone:'America/New_York'}));
+  const fmtD=d=>d.toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'});
+  const fmtT=d=>d.toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+  const asxD=aest.getDay(),asxH=aest.getHours(),asxM=aest.getMinutes();
+  const asxOpen=asxD>=1&&asxD<=5&&(asxH>10||(asxH===10&&asxM>=0))&&asxH<16;
+  const asxPre=asxD>=1&&asxD<=5&&asxH>=7&&asxH<10;
+  const nycD=nyc.getDay(),nycH=nyc.getHours(),nycM=nyc.getMinutes();
+  const nycOpen=nycD>=1&&nycD<=5&&(nycH>9||(nycH===9&&nycM>=30))&&nycH<16;
+  const nycPre=nycD>=1&&nycD<=5&&nycH>=4&&nycH<9;
+  function b(open,pre,lbl){
+    const cls=open?'mo':pre?'mp':'mc';const dcls=open?'do':pre?'dp':'dc';
+    const txt=open?'Open':pre?'Pre':'Closed';
+    return`<span class="mkt-badge ${cls}"><span class="dot ${dcls}"></span>${lbl} ${txt}</span>`;
+  }
+  document.getElementById('mktBadges').innerHTML=b(asxOpen,asxPre,'ASX')+b(nycOpen,nycPre,'NYSE');
+  document.getElementById('clockBlock').innerHTML=`
+    <div class="clock-date">Brisbane — ${fmtD(aest)}</div>
+    <div class="clock-time">${fmtT(aest)}</div>
+    <div class="clock-date" style="margin-top:3px">New York — ${fmtD(nyc)}</div>
+    <div class="clock-time">${fmtT(nyc)}</div>`;
+}
+updateClock();setInterval(updateClock,1000);
+
+// ═══════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════
+function nav(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>{if((n.getAttribute('onclick')||'').includes("'"+id+"'"))n.classList.add('active');});
+  if(id==='portfolio')renderPortfolio();
+  if(id==='history')renderHistory();
+  if(id==='paper')renderPaper();
+  if(id==='sim')renderSim();
+  if(id==='ipo')renderIPO();
+}
+
+// ═══════════════════════════════════
+// GLOSSARY
+// ═══════════════════════════════════
+const GLOSS=[
+  {term:'RSI',tag:'ta',tl:'Technical',def:'Relative Strength Index (0–100). Below 30 = oversold (potential buy). Above 70 = overbought (potential sell). Calculated from average price gains vs losses over 14 days. The most widely used momentum indicator.',links:[{t:'Investopedia: RSI',u:'https://www.investopedia.com/terms/r/rsi.asp'}]},
+  {term:'SMA20',tag:'ta',tl:'Technical',def:'20-day Simple Moving Average — the average closing price over the past 20 trading days. "vs SMA20" shows how far the current price is below (negative) or above (positive) this average. Far below = stretched downward, likely to revert.',links:[{t:'Investopedia: Moving Average',u:'https://www.investopedia.com/terms/s/sma.asp'}]},
+  {term:'Volume spike',tag:'ta',tl:'Technical',def:'Recent 5-day average volume divided by the 20-day average. A spike of 2× means twice the usual shares are trading. High volume during a drop = capitulation (panic selling), which often precedes a bounce.',links:[{t:'Investopedia: Volume',u:'https://www.investopedia.com/terms/v/volume.asp'}]},
+  {term:'Liquidity score',tag:'ta',tl:'Technical',def:'How easily a stock can be bought or sold without moving the price. Low-volume stocks (thin market) are harder to exit quickly and price movements are less reliable — even good signals can fail if nobody is trading the stock. This app penalises low-liquidity stocks.',links:[{t:'Investopedia: Liquidity',u:'https://www.investopedia.com/terms/l/liquidity.asp'}]},
+  {term:'Bounce score',tag:'ta',tl:'Technical',def:'Composite score 0–100: RSI (40pts) + SMA20 deviation (30pts) + volume spike (20pts) + drop size (10pts). Score >80 = strong oversold signal. NOT a price prediction — it measures how statistically stretched a stock is to the downside.',links:[]},
+  {term:'52-week low / Near bottom',tag:'ta',tl:'Technical',def:'The lowest price in the past 52 weeks. "Near bottom" bar shows where current price sits: left = near 52-wk low (potential floor), right = far above. Near bottom = higher probability the worst selling is over. Always check why the stock fell.',links:[{t:'Investopedia: 52-Week Low',u:'https://www.investopedia.com/terms/1/52wklow.asp'}]},
+  {term:'Sell signal',tag:'ta',tl:'Technical',def:'"Hold" = RSI below 65 and price not far above SMA20. "Consider selling" = RSI 65–75 or price 10%+ above SMA20. "Strong sell" = RSI above 75 or price 15%+ above SMA20. These are technical signals only — always combine with news and your own judgment.',links:[{t:'Using RSI to sell',u:'https://www.investopedia.com/articles/active-trading/042114/overbought-or-oversold-use-relative-strength-index-find-out.asp'}]},
+  {term:'CommSec brokerage',tag:'risk',tl:'Risk',def:'CommBank\'s CommSec charges for ASX trades: $10 minimum, or 0.12% of trade value (whichever is greater). For US shares: USD $19.95 or 0.31% (whichever is greater). Applied on both buy and sell. On a $5,000 trade: $10 buy + $10 sell = $20 total cost.',links:[{t:'CommSec fees',u:'https://www.commsec.com.au/support/rates-and-fees.html'}]},
+  {term:'IPO',tag:'fund',tl:'Fundamental',def:'Initial Public Offering — first time a private company sells shares publicly. Early buyers can profit from post-listing price rises. Risk: many IPOs fall below listing price within 6–12 months. Lock-up expiry (insiders allowed to sell) often causes a price drop.',links:[{t:'ASX IPOs',u:'https://www2.asx.com.au/investors/investment-tools-and-resources/investment-options/shares/ipos'},{t:'Investopedia: IPO',u:'https://www.investopedia.com/terms/i/ipo.asp'}]},
+  {term:'P&L (Profit and Loss)',tag:'fund',tl:'Fundamental',def:'Unrealised P&L = (current price − buy price) × shares. Realised P&L = same calculation after selling. Always subtract brokerage from both sides. Net P&L = sell proceeds − buy cost − brokerage fees.',links:[]},
+  {term:'Stop loss',tag:'risk',tl:'Risk',def:'A pre-set exit price to limit losses. E.g. buy at $10, stop loss at $8 = maximum 20% loss. Essential discipline. Biotech stocks can drop 60–80% on failed trials — a stop loss prevents catastrophic losses.',links:[{t:'Investopedia: Stop-Loss',u:'https://www.investopedia.com/terms/s/stop-lossorder.asp'}]},
+  {term:'Diversification',tag:'risk',tl:'Risk',def:'Never put more than 5% of your portfolio in a single speculative stock. For biotech: limit total sector exposure to 20–30% of portfolio. Spread across sectors, geographies, and asset classes.',links:[{t:'Investopedia: Diversification',u:'https://www.investopedia.com/terms/d/diversification.asp'}]},
+  {term:'Biotech & trading volume',tag:'fund',tl:'Fundamental',def:'Your instinct is correct: biotech stocks often have thin trading volume because fewer investors understand the science. This means even a technically sound stock may not move on fundamentals alone — the market needs a catalyst (trial result, partnership, FDA decision) to notice it. Always check avg daily volume.',links:[{t:'ClinicalTrials.gov',u:'https://clinicaltrials.gov'},{t:'BioPharma Catalyst Calendar',u:'https://www.biopharmcatalyst.com'}]},
+  {term:'ASX vs NYSE/NASDAQ',tag:'fund',tl:'Fundamental',def:'ASX = Australian Securities Exchange (Sydney). Opens 10:00am–4:00pm AEST Mon–Fri. Stocks priced in AUD. Ticker suffix: .AX (e.g. CSL.AX). NYSE/NASDAQ = US exchanges. Opens 9:30am–4:00pm ET = 10:30pm–4:00am AEST. Stocks priced in USD.',links:[{t:'ASX',u:'https://www2.asx.com.au'},{t:'NASDAQ',u:'https://www.investopedia.com/terms/n/nasdaq.asp'}]},
+];
+
+function renderGloss(items){
+  const tc={ta:'t-ta',fund:'t-fund',risk:'t-risk'};
+  document.getElementById('glossItems').innerHTML=items.map(g=>`
+    <div class="g-item"><div class="g-term">${g.term}<span class="g-tag ${tc[g.tag]||''}">${g.tl}</span></div>
+    <div class="g-def">${g.def}</div>
+    ${(g.links||[]).map(l=>`<a class="g-link" href="${l.u}" target="_blank">→ ${l.t}</a>`).join(' ')}</div>`).join('');
+}
+renderGloss(GLOSS);
+function filterGloss(q){renderGloss(q?GLOSS.filter(g=>g.term.toLowerCase().includes(q.toLowerCase())||g.def.toLowerCase().includes(q.toLowerCase())):GLOSS);}
+function toggleGlossary(){const p=document.getElementById('gPanel'),o=document.getElementById('gOverlay');const open=p.classList.contains('open');p.classList.toggle('open',!open);o.classList.toggle('open',!open);}
+
+// ═══════════════════════════════════
+// TA CALCULATIONS
+// ═══════════════════════════════════
+function calcRSI(c,p=14){
+  if(c.length<p+1)return 50;
+  let g=0,l=0;
+  for(let i=c.length-p;i<c.length;i++){const d=c[i]-c[i-1];if(d>0)g+=d;else l-=d;}
+  const ag=g/p,al=l/p;if(al===0)return 100;
+  return Math.round((100-100/(1+ag/al))*10)/10;
+}
+function calcSMA(c,p=20){const s=c.slice(-p);return s.reduce((a,b)=>a+b,0)/s.length;}
+function analyse(closes,volumes){
+  const n=closes.length,cur=closes[n-1],mo=closes[Math.max(0,n-22)];
+  const drop=((cur-mo)/mo)*100;
+  const rsi=calcRSI(closes);
+  const sma20=calcSMA(closes,20);
+  const pvs=((cur-sma20)/sma20)*100;
+  const rv=volumes.slice(-5).reduce((a,b)=>a+b,0)/5;
+  const av=volumes.slice(-20).reduce((a,b)=>a+b,0)/20;
+  const vs=av>0?rv/av:1;
+  const avgVol=av;
+  // Liquidity: normalise avg daily volume to 0-100
+  const liqScore=Math.min(100,Math.round(Math.log10(Math.max(avgVol,1))/7*100));
+  // Score
+  let score=0;
+  if(rsi<25)score+=40;else if(rsi<30)score+=32;else if(rsi<40)score+=20;else if(rsi<50)score+=10;
+  if(pvs<-20)score+=30;else if(pvs<-15)score+=22;else if(pvs<-10)score+=15;else if(pvs<-5)score+=7;
+  if(vs>2.5)score+=20;else if(vs>2)score+=15;else if(vs>1.5)score+=10;else if(vs>1.2)score+=5;
+  if(drop<-20)score+=10;else if(drop<-10)score+=6;else if(drop<-5)score+=3;
+  score=Math.min(score,100);
+  // Liquidity penalty: if avg vol < 100k, penalise
+  if(avgVol<100000)score=Math.round(score*0.5);
+  else if(avgVol<500000)score=Math.round(score*0.8);
+  const low52=Math.min(...closes.slice(-Math.min(252,closes.length)));
+  const high52=Math.max(...closes.slice(-Math.min(252,closes.length)));
+  const range=high52-low52;
+  const botPct=range>0?((cur-low52)/range)*100:50;
+  let sellSig,sellCls;
+  if(rsi>75||pvs>15){sellSig='Strong sell';sellCls='ss-s';}
+  else if(rsi>65||pvs>10){sellSig='Consider selling';sellCls='ss-c';}
+  else{sellSig='Hold';sellCls='ss-h';}
+  return{cur,drop,rsi,sma20,pvs,vs,avgVol,liqScore,score,low52,high52,botPct,sellSig,sellCls};
+}
+
+// ═══════════════════════════════════
+// DATA FETCH
+// ═══════════════════════════════════
+async function fetchTicker(ticker){
+  const end=Math.floor(Date.now()/1000),start=end-400*24*3600;
+  const yUrl=`https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&period1=${start}&period2=${end}&includePrePost=false`;
+  const proxies=[`https://corsproxy.io/?${encodeURIComponent(yUrl)}`,`https://api.allorigins.win/raw?url=${encodeURIComponent(yUrl)}`];
+  for(const url of proxies){
+    try{
+      const r=await fetch(url,{signal:AbortSignal.timeout(10000)});
+      if(!r.ok)continue;const txt=await r.text();if(!txt||txt.length<200)continue;
+      const d=JSON.parse(txt);const res=d?.chart?.result?.[0];if(!res)continue;
+      const q=res.indicators?.quote?.[0];if(!q)continue;
+      const pairs=(q.close||[]).map((c,i)=>({c,v:(q.volume||[])[i]||0})).filter(x=>x.c!=null&&x.c>0&&!isNaN(x.c));
+      if(pairs.length<22)continue;
+      return{closes:pairs.map(p=>p.c),volumes:pairs.map(p=>p.v)};
+    }catch(e){continue;}
+  }
+  return null;
+}
+async function fetchPrice(ticker){const d=await fetchTicker(ticker);return d?d.closes[d.closes.length-1]:null;}
+
+async function fetchReason(ticker,name,drop){
+  try{
+    const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:60,
+        system:"Financial analyst. 12 words max. Be specific.",
+        messages:[{role:"user",content:`Why did ${name} (${ticker}) drop ~${Math.abs(drop).toFixed(0)}% last month? 12 words.`}]})});
+    if(!r.ok)return null;
+    const d=await r.json();
+    const txt=d?.content?.[0]?.text?.trim();
+    return txt||null;
+  }catch(e){return null;}
+}
+
+// ═══════════════════════════════════
+// SCREENER
+// ═══════════════════════════════════
+let scResults=[],scSortK='score',scSortD=-1;
+function sortSc(k){if(scSortK===k)scSortD*=-1;else{scSortK=k;scSortD=k==='ticker'?1:-1;}renderScTable();}
+
+function pill(s){if(s>=75)return'<span class="pill pill-s">Strong</span>';if(s>=50)return'<span class="pill pill-m">Moderate</span>';return'<span class="pill pill-w">Weak</span>';}
+function barCol(s){return s>=75?'#639922':s>=50?'#BA7517':'#E24B4A';}
+function rsiCol(r){return r<30?'#A32D2D':r<50?'#854F0B':'#555';}
+function botHTML(bp,l52){
+  const col=bp<15?'#E24B4A':bp<30?'#BA7517':'#639922';
+  const lbl=bp<15?'Near bottom':bp<30?'Getting close':bp<50?'Midrange':'Far above low';
+  return`<div style="display:flex;align-items:center;gap:5px"><div class="bot-bar"><div class="bot-fill" style="width:${bp.toFixed(0)}%;background:${col}"></div></div><span style="font-size:11px;color:${col};white-space:nowrap">${lbl}</span></div><div style="font-size:10px;color:#aaa">52wk low: $${l52.toFixed(2)}</div>`;
+}
+function liqHTML(liq,avgVol){
+  const vk=avgVol>=1000000?(avgVol/1000000).toFixed(1)+'M':(avgVol/1000).toFixed(0)+'K';
+  const col=avgVol<100000?'#A32D2D':avgVol<500000?'#854F0B':'#3B6D11';
+  return`<div style="display:flex;align-items:center;gap:4px"><div class="vol-bar"><div class="vol-fill" style="width:${liq}%;background:${col}"></div></div><span style="font-size:11px;color:${col}">${vk}/day</span></div>`;
+}
+// Share count suggestion
+function suggestShares(price,isAU,cash=null){
+  const pp=getPaper();const budget=cash||Math.min(pp.cash*0.1,2000); // 10% of cash, max $2000
+  const brok=brokerage(budget,isAU);
+  const shares=Math.floor((budget-brok)/price);
+  return shares>0?shares:0;
+}
+
+function renderScTable(){
+  const tbody=document.getElementById('scanBody');
+  if(!scResults.length){tbody.innerHTML='';return;}
+  const isAU=currentMarket==='AU';
+  const sorted=[...scResults].sort((a,b)=>{
+    const av=a[scSortK],bv=b[scSortK];
+    if(typeof av==='string')return scSortD*(av<bv?-1:av>bv?1:0);
+    return scSortD*(av-bv);
+  });
+  tbody.innerHTML=sorted.map(s=>{
+    const exB=isAU?'<span class="badge-au">ASX</span>':'<span class="badge-us">US</span>';
+    const rs=s.reason===undefined?'<span style="color:#bbb;font-size:11px;font-style:italic">Loading...</span>':s.reason?`<span style="font-size:12px;color:#555;max-width:160px;display:block;line-height:1.4">${s.reason}</span>`:'<span class="muted">—</span>';
+    const sug=suggestShares(s.cur,isAU);
+    return`<tr>
+      <td><a href="https://finance.yahoo.com/quote/${s.ticker}" target="_blank" class="tlink">${s.ticker}</a>${exB}<span class="cname">${s.name}</span></td>
+      <td class="muted">$${s.cur.toFixed(2)}</td>
+      <td class="red">${s.drop.toFixed(1)}%</td>
+      <td style="color:${rsiCol(s.rsi)};font-weight:500">${s.rsi}</td>
+      <td class="red">${s.pvs.toFixed(1)}%</td>
+      <td class="${s.vs>1.5?'green':s.vs>1.2?'amber':'muted'}">${s.vs.toFixed(2)}×</td>
+      <td>${liqHTML(s.liqScore,s.avgVol)}</td>
+      <td><span class="bw"><span class="bf" style="width:${s.score}%;background:${barCol(s.score)}"></span></span><span class="muted" style="font-size:12px;margin-right:4px">${s.score}</span>${pill(s.score)}</td>
+      <td>${botHTML(s.botPct,s.low52)}</td>
+      <td><span class="sell-sig ${s.sellCls}">${s.sellSig}</span></td>
+      <td>${rs}</td>
+      <td>
+        <button class="btn btn-sm btn-green" onclick="quickAddPortfolio('${s.ticker}','${s.name}',${s.cur},${isAU?1:0})">+ Portfolio</button>
+        <button class="btn btn-sm" onclick="quickAddPaper('${s.ticker}')">+ Paper</button>
+        ${sug>0?`<div class="suggest-box">Suggest: ${sug} shares</div>`:''}
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function renderScSkeleton(n=7){
+  const tb=document.getElementById('scanBody');tb.innerHTML='';
+  for(let i=0;i<n;i++){const tr=document.createElement('tr');tr.innerHTML=Array(12).fill('<td><span class="skel" style="width:70px;height:11px">&nbsp;</span></td>').join('');tb.appendChild(tr);}
+}
+
+async function runScan(){
+  const btn=document.getElementById('scanBtn');
+  const st=document.getElementById('ss');
+  document.getElementById('serr').innerHTML='';document.getElementById('swarn').innerHTML='';
+  document.getElementById('scanStats').style.display='none';
+  scResults=[];
+  const minDrop=parseInt(document.getElementById('dropSel').value);
+  const minVol=parseInt(document.getElementById('volSel').value)*1000;
+  const sKey=document.getElementById('sectorSel').value;
+  const sector=SECTORS[currentMarket][sKey];
+  if(!sector){alert('Select a sector.');return;}
+  const tickers=Object.keys(sector.tickers);
+  if(!tickers.length){alert('No tickers in this sector.');return;}
+  btn.disabled=true;
+  const prog=document.getElementById('sp'),fill=document.getElementById('spf');
+  prog.style.display='block';fill.style.width='0%';
+  renderScSkeleton();document.getElementById('scanCard').style.display='block';
+  const t0=Date.now();let done=0,failed=0;const results=[];
+  await Promise.all(tickers.map(async ticker=>{
+    const data=await fetchTicker(ticker);done++;
+    fill.style.width=Math.round(done/tickers.length*100)+'%';
+    st.textContent=`Fetching ${done}/${tickers.length}...`;
+    if(!data){failed++;return;}
+    const a=analyse(data.closes,data.volumes);
+    a.ticker=ticker;a.name=sector.tickers[ticker]||ticker;a.reason=undefined;
+    if(a.drop<=-minDrop&&a.avgVol>=minVol)results.push(a);
+  }));
+  prog.style.display='none';
+  results.sort((a,b)=>b.score-a.score);
+  const top=results.slice(0,10);
+  const elapsed=((Date.now()-t0)/1000).toFixed(1)+'s';
+  document.getElementById('stL').textContent=tickers.length-failed;
+  document.getElementById('stM').textContent=results.length;
+  document.getElementById('stR').textContent=top.length?Math.round(top.reduce((a,s)=>a+s.rsi,0)/top.length):'—';
+  document.getElementById('stT').textContent=elapsed;
+  document.getElementById('scanStats').style.display='grid';
+  if(failed===tickers.length){document.getElementById('serr').innerHTML='<div class="err">Could not load data — proxy may be down. Try again in a minute.</div>';btn.disabled=false;return;}
+  if(failed>0)document.getElementById('swarn').innerHTML=`<div class="warn">${failed} tickers timed out.</div>`;
+  if(top.length===0){document.getElementById('scanBody').innerHTML=`<tr><td colspan="12"><div class="empty">No stocks matched. Try lowering the drop threshold or volume filter.</div></td></tr>`;}
+  else{scResults=top;renderScTable();}
+  const ts=new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'});
+  st.textContent=`Complete — ${top.length} candidates. ${ts}`;
+  document.getElementById('scanCard').style.display='block';
+  document.getElementById('scLegend').style.display='flex';
+  btn.disabled=false;
+  // AI reasons
+  if(top.length>0){
+    await Promise.all(top.map(async s=>{
+      s.reason=await fetchReason(s.ticker,s.name,s.drop);
+      renderScTable();
+    }));
+    st.textContent=`Complete — ${top.length} candidates with AI reasons. ${ts}`;
+  }
+  // Feed simulation
+  feedSim(top);
+}
+
+function quickAddPortfolio(ticker,name,price,isAU){
+  nav('portfolio');
+  document.getElementById('ptT').value=ticker;
+  document.getElementById('ptP').value=price.toFixed(2);
+  document.getElementById('ptD').value=new Date().toISOString().split('T')[0];
+  document.getElementById('ptStatus').textContent=`Pre-filled from screener: ${name} @ $${price.toFixed(2)}`;
+}
+function quickAddPaper(ticker){
+  nav('paper');
+  document.getElementById('ppT').value=ticker;
+}
+
+// ═══════════════════════════════════
+// STOCK SEARCH
+// ═══════════════════════════════════
+async function searchStock(){
+  const raw=document.getElementById('searchTicker').value.trim().toUpperCase();
+  if(!raw)return;
+  const st=document.getElementById('searchStatus');
+  const res=document.getElementById('searchResult');
+  st.textContent=`Fetching ${raw}...`;res.innerHTML='';
+  const data=await fetchTicker(raw);
+  if(!data){st.textContent='Could not load. Check ticker (use .AX suffix for ASX stocks).';return;}
+  const a=analyse(data.closes,data.volumes);
+  const isAU=raw.endsWith('.AX');
+  const exB=isAU?'<span class="badge-au">ASX</span>':'<span class="badge-us">US</span>';
+  const sug=suggestShares(a.cur,isAU);
+  st.textContent='';
+  res.innerHTML=`<div class="card"><div class="card-head"><h3>${raw} ${exB}</h3><a href="https://finance.yahoo.com/quote/${raw}" target="_blank" class="btn btn-sm">Yahoo Finance →</a></div>
+  <div class="card-body">
+    <div class="sg"><div class="stat"><div class="stat-lbl">Price</div><div class="stat-val">$${a.cur.toFixed(2)}</div></div>
+    <div class="stat"><div class="stat-lbl">1M change</div><div class="stat-val ${a.drop<0?'red':'green'}">${a.drop.toFixed(1)}%</div></div>
+    <div class="stat"><div class="stat-lbl">RSI</div><div class="stat-val" style="color:${rsiCol(a.rsi)}">${a.rsi}</div><div class="stat-sub">${a.rsi<30?'Oversold':a.rsi>70?'Overbought':'Neutral'}</div></div>
+    <div class="stat"><div class="stat-lbl">Bounce score</div><div class="stat-val">${a.score}/100</div></div></div>
+    <div class="sg"><div class="stat"><div class="stat-lbl">vs SMA20</div><div class="stat-val ${a.pvs<0?'red':'green'}">${a.pvs.toFixed(1)}%</div></div>
+    <div class="stat"><div class="stat-lbl">Vol spike</div><div class="stat-val">${a.vs.toFixed(2)}×</div></div>
+    <div class="stat"><div class="stat-lbl">Avg daily vol</div><div class="stat-val" style="font-size:16px">${a.avgVol>1000000?(a.avgVol/1000000).toFixed(1)+'M':(a.avgVol/1000).toFixed(0)+'K'}</div><div class="stat-sub">${a.avgVol<100000?'Very low liquidity':a.avgVol<500000?'Low liquidity':'Good liquidity'}</div></div>
+    <div class="stat"><div class="stat-lbl">52-wk range</div><div class="stat-val" style="font-size:15px">$${a.low52.toFixed(2)}–$${a.high52.toFixed(2)}</div></div></div>
+    <div style="margin-bottom:1rem">${botHTML(a.botPct,a.low52)}</div>
+    <div style="margin-bottom:.5rem"><strong style="font-size:13px">Sell signal: </strong><span class="sell-sig ${a.sellCls}">${a.sellSig}</span></div>
+    ${sug>0?`<div class="suggest-box" style="margin-bottom:1rem">Share suggestion: ~${sug} shares based on 10% of paper cash (${fmtMoney(sug*a.cur)} + brokerage)</div>`:''}
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-green" onclick="quickAddPortfolio('${raw}','${raw}',${a.cur},${isAU?1:0})">+ Add to portfolio</button>
+      <button class="btn btn-sm btn-blue" onclick="quickAddPaper('${raw}')">+ Paper trade</button>
+    </div>
+  </div></div>`;
+}
+
+// ═══════════════════════════════════
+// IPO
+// ═══════════════════════════════════
+const IPOS=[
+  {ticker:'RDDT',name:'Reddit',date:'Mar 2024',price:34,ex:'NYSE',sec:'Technology',status:'Listed',note:'Social media. Listed $34, opened above $50.'},
+  {ticker:'ASLA',name:'Astera Labs',date:'Mar 2024',price:36,ex:'NASDAQ',sec:'Semiconductors',status:'Listed',note:'AI data connectivity chips.'},
+  {ticker:'TLX.AX',name:'Telix Pharma',date:'Nov 2017',price:0.65,ex:'ASX',sec:'Biotech',status:'Listed',note:'Nuclear medicine. Strong performer since listing.'},
+  {ticker:'TBA',name:'Klarna',date:'2025 expected',price:null,ex:'NYSE',sec:'Fintech',status:'Upcoming',note:'Buy-now-pay-later giant. ~$7B valuation.'},
+  {ticker:'TBA',name:'Chime',date:'2025 expected',price:null,ex:'NASDAQ',sec:'Fintech',status:'Upcoming',note:'US neobank, 20M+ customers.'},
+  {ticker:'TBA',name:'Shein',date:'2024–25',price:null,ex:'London/US',sec:'Fashion',status:'Upcoming',note:'Fast fashion. ~$60B valuation.'},
+  {ticker:'PRO.AX',name:'Pro Medicus',date:'Feb 2000',price:0.20,ex:'ASX',sec:'Health Tech',status:'Listed',note:'Medical imaging software. Exceptional long-term performer.'},
+  {ticker:'NEU.AX',name:'Neuren Pharma',date:'Oct 2004',price:0.20,ex:'ASX',sec:'Biotech',status:'Listed',note:'Rare disease drugs. Significant appreciation post-listing.'},
+];
+function renderIPO(){
+  document.getElementById('ipoBody').innerHTML=IPOS.map(i=>`
+    <div style="display:grid;grid-template-columns:80px 1fr 80px 70px;gap:12px;padding:11px 0;border-bottom:1px solid #f0f0ec;font-size:13px;align-items:start">
+      <div><strong>${i.ticker}</strong><div style="font-size:10px;color:#888">${i.ex}</div></div>
+      <div><div style="font-weight:500">${i.name}</div><div style="font-size:12px;color:#555;margin-top:2px">${i.note}</div></div>
+      <div><span class="pill ${i.status==='Upcoming'?'pill-b':'pill-s'}">${i.status}</span><div style="font-size:10px;color:#888;margin-top:3px">${i.date}</div></div>
+      <div>${i.price?`<strong>$${i.price}</strong>`:'<span class="muted">TBA</span>'}</div>
+    </div>`).join('')+
+    `<div style="margin-top:1rem;font-size:12px;color:#aaa">Live data: <a href="https://www2.asx.com.au/investors/investment-tools-and-resources/investment-options/shares/ipos" target="_blank" style="color:#378ADD">ASX IPOs</a> · <a href="https://stockanalysis.com/ipos/" target="_blank" style="color:#378ADD">US IPOs (StockAnalysis)</a></div>`;
+}
+
+// ═══════════════════════════════════
+// PORTFOLIO (real)
+// ═══════════════════════════════════
+function getPF(){try{return JSON.parse(localStorage.getItem('pf')||'[]');}catch(e){return[];}}
+function savePF(p){localStorage.setItem('pf',JSON.stringify(p));}
+function addPosition(){
+  const t=document.getElementById('ptT').value.trim().toUpperCase();
+  const s=parseFloat(document.getElementById('ptS').value);
+  const p=parseFloat(document.getElementById('ptP').value);
+  const d=document.getElementById('ptD').value;
+  if(!t||!s||!p||!d){alert('Fill all fields.');return;}
+  const isAU=t.endsWith('.AX');
+  const brok=brokerage(s*p,isAU);
+  const arr=getPF();
+  arr.push({id:Date.now(),ticker:t,shares:s,buyPrice:p,brokerage:brok,buyDate:d,curPrice:p,isAU});
+  savePF(arr);renderPortfolio();
+  document.getElementById('ptStatus').textContent=`Added ${s} × ${t} @ $${p.toFixed(2)}. Brokerage: ${fmtMoney(brok)}.`;
+}
+async function refreshPortfolio(){
+  const arr=getPF();for(const pos of arr){const p=await fetchPrice(pos.ticker);if(p)pos.curPrice=p;}
+  savePF(arr);renderPortfolio();
+}
+function closePos(id){
+  if(!confirm('Close position and move to history?'))return;
+  const arr=getPF(),pos=arr.find(x=>x.id===id);if(!pos)return;
+  const brok=brokerage(pos.shares*pos.curPrice,pos.isAU);
+  const h=getHist();
+  h.push({id:Date.now(),ticker:pos.ticker,shares:pos.shares,buyPrice:pos.buyPrice,sellPrice:pos.curPrice,buyBrok:pos.brokerage,sellBrok:brok,buyDate:pos.buyDate,sellDate:new Date().toISOString().split('T')[0]});
+  saveHist(h);savePF(arr.filter(x=>x.id!==id));renderPortfolio();renderHistory();
+}
+function renderPortfolio(){
+  const arr=getPF();
+  const pfStats=document.getElementById('pfStats'),pfCard=document.getElementById('pfCard'),pfBody=document.getElementById('pfBody');
+  pfCard.style.display='block';
+  if(!arr.length){pfStats.style.display='none';pfBody.innerHTML='<tr><td colspan="9"><div class="empty">No positions. Add above or use + Portfolio from the screener.</div></td></tr>';return;}
+  const inv=arr.reduce((a,x)=>a+x.shares*x.buyPrice+x.brokerage,0);
+  const val=arr.reduce((a,x)=>a+x.shares*x.curPrice,0);
+  const pnl=val-arr.reduce((a,x)=>a+x.shares*x.buyPrice+x.brokerage,0);
+  document.getElementById('pfInv').textContent=fmtMoney(inv);
+  document.getElementById('pfVal').textContent=fmtMoney(val);
+  const pe=document.getElementById('pfPnl');pe.textContent=(pnl>=0?'+':'')+fmtMoney(pnl);pe.className='stat-val '+(pnl>=0?'green':'red');
+  document.getElementById('pfCnt').textContent=arr.length;
+  pfStats.style.display='grid';
+  pfBody.innerHTML=arr.map(pos=>{
+    const pnl=((pos.curPrice-pos.buyPrice)/pos.buyPrice)*100;
+    const pv=(pos.curPrice-pos.buyPrice)*pos.shares;
+    let ss,sc;if(pnl>50){ss='Strong sell';sc='ss-s';}else if(pnl>25){ss='Consider selling';sc='ss-c';}else{ss='Hold';sc='ss-h';}
+    return`<tr>
+      <td><a href="https://finance.yahoo.com/quote/${pos.ticker}" target="_blank" class="tlink">${pos.ticker}</a>${pos.isAU?'<span class="badge-au">ASX</span>':'<span class="badge-us">US</span>'}</td>
+      <td>${pos.shares}</td><td class="muted">$${pos.buyPrice.toFixed(2)}</td>
+      <td class="muted" style="font-size:12px">${fmtMoney(pos.brokerage)}</td>
+      <td class="muted">$${pos.curPrice.toFixed(2)}</td>
+      <td class="${pv>=0?'green':'red'}">${pv>=0?'+':''}${fmtMoney(Math.abs(pv))}</td>
+      <td class="${pnl>=0?'green':'red'}">${pnl>=0?'+':''}${pnl.toFixed(1)}%</td>
+      <td><span class="sell-sig ${sc}">${ss}</span></td>
+      <td><button class="btn btn-sm btn-red" onclick="closePos(${pos.id})">Close</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════
+// HISTORY
+// ═══════════════════════════════════
+function getHist(){try{return JSON.parse(localStorage.getItem('hist')||'[]');}catch(e){return[];}}
+function saveHist(h){localStorage.setItem('hist',JSON.stringify(h));}
+function addHistory(){
+  const t=document.getElementById('htT').value.trim().toUpperCase(),s=parseFloat(document.getElementById('htS').value),b=parseFloat(document.getElementById('htB').value),sl=parseFloat(document.getElementById('htSl').value),bd=document.getElementById('htBD').value,sd=document.getElementById('htSD').value;
+  if(!t||!s||!b||!sl||!bd||!sd){alert('Fill all fields.');return;}
+  const isAU=t.endsWith('.AX');
+  const h=getHist();
+  h.push({id:Date.now(),ticker:t,shares:s,buyPrice:b,sellPrice:sl,buyBrok:brokerage(s*b,isAU),sellBrok:brokerage(s*sl,isAU),buyDate:bd,sellDate:sd});
+  saveHist(h);renderHistory();
+  ['htT','htS','htB','htSl','htBD','htSD'].forEach(id=>document.getElementById(id).value='');
+}
+function delHist(id){if(!confirm('Delete?'))return;saveHist(getHist().filter(x=>x.id!==id));renderHistory();}
+function renderHistory(){
+  const h=getHist();const htCard=document.getElementById('htCard'),htBody=document.getElementById('htBody');
+  htCard.style.display='block';
+  if(!h.length){document.getElementById('htStats').style.display='none';htBody.innerHTML='<tr><td colspan="10"><div class="empty">No history yet.</div></td></tr>';return;}
+  const wins=h.filter(x=>x.sellPrice>x.buyPrice).length;
+  const netProfit=h.reduce((a,x)=>{const tot=(x.sellPrice-x.buyPrice)*x.shares-(x.buyBrok||0)-(x.sellBrok||0);return a+tot;},0);
+  document.getElementById('htTot').textContent=h.length;
+  document.getElementById('htW').textContent=wins;
+  const pp=document.getElementById('htP');pp.textContent=(netProfit>=0?'+':'')+fmtMoney(netProfit);pp.className='stat-val '+(netProfit>=0?'green':'red');
+  document.getElementById('htR').textContent=Math.round(wins/h.length*100)+'%';
+  document.getElementById('htStats').style.display='grid';
+  htBody.innerHTML=[...h].reverse().map(t=>{
+    const brok=(t.buyBrok||0)+(t.sellBrok||0);
+    const profit=(t.sellPrice-t.buyPrice)*t.shares-brok;
+    const ret=((t.sellPrice-t.buyPrice)/t.buyPrice)*100;
+    const days=Math.round((new Date(t.sellDate)-new Date(t.buyDate))/(86400000));
+    return`<tr>
+      <td><strong>${t.ticker}</strong></td><td>${t.shares}</td>
+      <td class="muted">$${t.buyPrice.toFixed(2)}</td><td class="muted">$${t.sellPrice.toFixed(2)}</td>
+      <td class="muted" style="font-size:12px">${fmtMoney(brok)}</td>
+      <td class="${profit>=0?'green':'red'}">${profit>=0?'+':''}${fmtMoney(Math.abs(profit))}</td>
+      <td class="${ret>=0?'green':'red'}">${ret>=0?'+':''}${ret.toFixed(1)}%</td>
+      <td class="muted">${days}d</td>
+      <td class="muted" style="font-size:11px">${t.buyDate} → ${t.sellDate}</td>
+      <td><button class="btn btn-sm" onclick="delHist(${t.id})">×</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════
+// PAPER TRADING
+// ═══════════════════════════════════
+function getPP(){try{return JSON.parse(localStorage.getItem('pp')||JSON.stringify({cash:PAPER_DEFAULT,startCash:PAPER_DEFAULT,positions:[],log:[]}));}catch(e){return{cash:PAPER_DEFAULT,startCash:PAPER_DEFAULT,positions:[],log:[]};}}
+function savePP(p){localStorage.setItem('pp',JSON.stringify(p));}
+function resetPaper(){if(!confirm('Reset paper trading? All virtual data lost.'))return;localStorage.removeItem('pp');renderPaper();}
+function setPaperCash(){
+  const v=parseFloat(document.getElementById('ppStartCash').value);
+  if(!v||v<100){alert('Enter a valid amount.');return;}
+  const pp=getPP();pp.cash=v;pp.startCash=v;savePP(pp);renderPaper();
+}
+async function paperTrade(){
+  const t=document.getElementById('ppT').value.trim().toUpperCase();
+  const s=parseFloat(document.getElementById('ppS').value);
+  const action=document.getElementById('ppA').value;
+  const st=document.getElementById('ppStatus');
+  if(!t||!s||s<1){st.textContent='Enter ticker and shares.';return;}
+  st.textContent='Fetching price...';
+  const price=await fetchPrice(t);
+  if(!price){st.textContent='Could not fetch price.';return;}
+  const isAU=t.endsWith('.AX');
+  const pp=getPP();
+  const now=new Date().toISOString();
+  const brok=brokerage(price*s,isAU);
+  if(action==='buy'){
+    const cost=price*s+brok;
+    if(cost>pp.cash){st.textContent=`Not enough cash. Need ${fmtMoney(cost)}, have ${fmtMoney(pp.cash)}.`;return;}
+    pp.cash-=cost;
+    const ex=pp.positions.find(x=>x.ticker===t);
+    if(ex){const tot=ex.shares+s;ex.avgBuy=(ex.avgBuy*ex.shares+price*s)/tot;ex.shares=tot;}
+    else pp.positions.push({ticker:t,shares:s,avgBuy:price,curPrice:price,isAU});
+    pp.log.push({dt:now,ticker:t,action:'BUY',shares:s,price,brok,total:cost});
+    st.textContent=`Bought ${s} × ${t} @ $${price.toFixed(2)}. Brokerage: ${fmtMoney(brok)}. Total: ${fmtMoney(cost)}.`;
+  }else{
+    const pos=pp.positions.find(x=>x.ticker===t);
+    if(!pos||pos.shares<s){st.textContent='Not enough shares.';return;}
+    const proceeds=price*s-brok;
+    pp.cash+=proceeds;
+    pos.shares-=s;
+    if(pos.shares<=0)pp.positions=pp.positions.filter(x=>x.ticker!==t);
+    pp.log.push({dt:now,ticker:t,action:'SELL',shares:s,price,brok,total:proceeds});
+    st.textContent=`Sold ${s} × ${t} @ $${price.toFixed(2)}. Brokerage: ${fmtMoney(brok)}. Net: ${fmtMoney(proceeds)}.`;
+  }
+  savePP(pp);renderPaper();
+}
+async function refreshPaper(){const pp=getPP();for(const pos of pp.positions){const p=await fetchPrice(pos.ticker);if(p)pos.curPrice=p;}savePP(pp);renderPaper();}
+async function quickSellPaper(ticker,shares){document.getElementById('ppT').value=ticker;document.getElementById('ppS').value=shares;document.getElementById('ppA').value='sell';await paperTrade();}
+function renderPaper(){
+  const pp=getPP();
+  document.getElementById('ppStartCash').value=pp.startCash||PAPER_DEFAULT;
+  const portVal=pp.positions.reduce((a,x)=>a+x.shares*x.curPrice,0);
+  const total=pp.cash+portVal;
+  const pnl=total-(pp.startCash||PAPER_DEFAULT);
+  const ret=pnl/(pp.startCash||PAPER_DEFAULT)*100;
+  document.getElementById('ppCash').textContent=fmtMoney(pp.cash);
+  document.getElementById('ppPort').textContent=fmtMoney(portVal);
+  const pe=document.getElementById('ppPnl');pe.textContent=(pnl>=0?'+':'')+fmtMoney(pnl);pe.className='stat-val '+(pnl>=0?'green':'red');
+  const re=document.getElementById('ppRet');re.textContent=(ret>=0?'+':'')+ret.toFixed(1)+'%';re.className='stat-val '+(ret>=0?'green':'red');
+  const ppCard=document.getElementById('ppCard'),ppHistCard=document.getElementById('ppHistCard');
+  if(!pp.positions.length){ppCard.style.display='none';}else{
+    ppCard.style.display='block';
+    const isAU=currentMarket==='AU';
+    document.getElementById('ppBody').innerHTML=pp.positions.map(pos=>{
+      const pnl=((pos.curPrice-pos.avgBuy)/pos.avgBuy)*100;
+      const pv=(pos.curPrice-pos.avgBuy)*pos.shares;
+      let ss,sc;if(pnl>50){ss='Strong sell';sc='ss-s';}else if(pnl>25){ss='Consider selling';sc='ss-c';}else{ss='Hold';sc='ss-h';}
+      const sug=suggestShares(pos.curPrice,pos.isAU,pp.cash);
+      return`<tr>
+        <td><strong>${pos.ticker}</strong></td><td>${pos.shares}</td>
+        <td class="muted">$${pos.avgBuy.toFixed(2)}</td><td class="muted">$${pos.curPrice.toFixed(2)}</td>
+        <td class="${pv>=0?'green':'red'}">${pv>=0?'+':''}${fmtMoney(Math.abs(pv))}</td>
+        <td class="${pnl>=0?'green':'red'}">${pnl>=0?'+':''}${pnl.toFixed(1)}%</td>
+        <td><span class="sell-sig ${sc}">${ss}</span></td>
+        <td>${sug>0?`<span class="suggest-box">+${sug} more</span>`:''}</td>
+        <td><button class="btn btn-sm btn-red" onclick="quickSellPaper('${pos.ticker}',${pos.shares})">Sell all</button></td>
+      </tr>`;
+    }).join('');
+  }
+  if(!pp.log.length){ppHistCard.style.display='none';}else{
+    ppHistCard.style.display='block';
+    document.getElementById('ppHistBody').innerHTML=[...pp.log].reverse().slice(0,30).map(l=>`<tr>
+      <td style="font-size:12px">${fmtDT(l.dt)}</td>
+      <td><strong>${l.ticker}</strong></td>
+      <td><span class="pill ${l.action==='BUY'?'pill-s':'pill-w'}">${l.action}</span></td>
+      <td>${l.shares}</td><td class="muted">$${l.price.toFixed(2)}</td>
+      <td class="muted">${fmtMoney(l.brok)}</td>
+      <td class="${l.action==='BUY'?'red':'green'}">${l.action==='BUY'?'-':'+'}${fmtMoney(Math.abs(l.total))}</td>
+    </tr>`).join('');
+  }
+}
+
+// ═══════════════════════════════════
+// AUTO-SIMULATION
+// ═══════════════════════════════════
+function getSim(){try{return JSON.parse(localStorage.getItem('sim')||JSON.stringify({startCash:10000,cash:10000,positions:[],history:[]}));}catch(e){return{startCash:10000,cash:10000,positions:[],history:[]};}}
+function saveSim(s){localStorage.setItem('sim',JSON.stringify(s));}
+function resetSim(){if(!confirm('Reset simulation? All sim data lost.'))return;localStorage.removeItem('sim');renderSim();}
+
+async function feedSim(stocks){
+  const sim=getSim();
+  const maxTrade=parseFloat(document.getElementById('simMaxTrade').value)||2000;
+  const now=new Date().toISOString().split('T')[0];
+  // Buy: score > 80
+  for(const s of stocks){
+    if(s.score<80)continue;
+    if(sim.positions.find(p=>p.ticker===s.ticker))continue; // already holding
+    const isAU=s.ticker.endsWith('.AX');
+    const brok=brokerage(maxTrade,isAU);
+    const shares=Math.floor((maxTrade-brok)/s.cur);
+    if(shares<1)continue;
+    const cost=shares*s.cur+brok;
+    if(cost>sim.cash)continue;
+    sim.cash-=cost;
+    sim.positions.push({ticker:s.ticker,name:s.name,shares,buyPrice:s.cur,curPrice:s.cur,buyDate:now,scoreAtBuy:s.score,isAU});
+  }
+  // Sell: sell signal triggered
+  for(const pos of [...sim.positions]){
+    const data=await fetchTicker(pos.ticker);
+    if(!data)continue;
+    const a=analyse(data.closes,data.volumes);
+    pos.curPrice=a.cur;
+    if(a.sellSig!=='Hold'){
+      const isAU=pos.isAU;
+      const brok=brokerage(pos.shares*a.cur,isAU);
+      const proceeds=pos.shares*a.cur-brok;
+      sim.cash+=proceeds;
+      const profit=proceeds-(pos.shares*pos.buyPrice+brokerage(pos.shares*pos.buyPrice,isAU));
+      sim.history.push({ticker:pos.ticker,buyDate:pos.buyDate,sellDate:now,buyPrice:pos.buyPrice,sellPrice:a.cur,shares:pos.shares,brok:(brokerage(pos.shares*pos.buyPrice,isAU)+brok),profit,scoreAtBuy:pos.scoreAtBuy});
+      sim.positions=sim.positions.filter(p=>p.ticker!==pos.ticker);
+    }
+  }
+  saveSim(sim);renderSim();
+}
+
+async function runSimScan(){
+  const startCash=parseFloat(document.getElementById('simCash').value)||10000;
+  const sim=getSim();sim.startCash=startCash;if(sim.cash===10000&&!sim.positions.length)sim.cash=startCash;saveSim(sim);
+  document.getElementById('simStatus').textContent='Running scan for score >80 stocks...';
+  await runScan();
+  document.getElementById('simStatus').textContent='Scan complete. Simulation updated.';
+}
+
+function renderSim(){
+  const sim=getSim();
+  const portVal=sim.positions.reduce((a,p)=>a+p.shares*p.curPrice,0);
+  const total=sim.cash+portVal;
+  const net=total-sim.startCash;
+  const wins=sim.history.filter(x=>x.profit>0).length;
+  document.getElementById('simS').textContent=fmtMoney(sim.startCash);
+  document.getElementById('simV').textContent=fmtMoney(total);
+  const ge=document.getElementById('simG');ge.textContent=(net>=0?'+':'')+fmtMoney(net);ge.className='stat-val '+(net>=0?'green':'red');
+  document.getElementById('simWR').textContent=sim.history.length?Math.round(wins/sim.history.length*100)+'%':'—';
+  document.getElementById('simStats').style.display='grid';
+  const spc=document.getElementById('simPosCard'),shc=document.getElementById('simHistCard');
+  if(!sim.positions.length){spc.style.display='none';}else{
+    spc.style.display='block';
+    document.getElementById('simPosBody').innerHTML=sim.positions.map(p=>{
+      const pnl=((p.curPrice-p.buyPrice)/p.buyPrice)*100;
+      const pv=(p.curPrice-p.buyPrice)*p.shares;
+      let ss,sc;if(pnl>50){ss='Strong sell';sc='ss-s';}else if(pnl>25){ss='Consider';sc='ss-c';}else{ss='Hold';sc='ss-h';}
+      return`<tr><td><strong>${p.ticker}</strong><span class="cname">${p.name}</span></td>
+        <td style="font-size:11px;color:#aaa">${p.buyDate}</td>
+        <td class="muted">$${p.buyPrice.toFixed(2)}</td><td class="muted">$${p.curPrice.toFixed(2)}</td>
+        <td class="${pv>=0?'green':'red'}">${pv>=0?'+':''}${fmtMoney(Math.abs(pv))}</td>
+        <td><span class="pill pill-s" style="font-size:10px">${p.scoreAtBuy}</span></td>
+        <td><span class="sell-sig ${sc}">${ss}</span></td>
+      </tr>`;
+    }).join('');
+  }
+  if(!sim.history.length){shc.style.display='none';}else{
+    shc.style.display='block';
+    document.getElementById('simHistBody').innerHTML=[...sim.history].reverse().map(t=>`<tr>
+      <td><strong>${t.ticker}</strong></td>
+      <td style="font-size:11px">${t.buyDate}</td>
+      <td style="font-size:11px">${t.sellDate}</td>
+      <td class="muted">$${t.buyPrice.toFixed(2)}</td>
+      <td class="muted">$${t.sellPrice.toFixed(2)}</td>
+      <td class="muted" style="font-size:12px">${fmtMoney(t.brok)}</td>
+      <td class="${t.profit>=0?'green':'red'}">${t.profit>=0?'+':''}${fmtMoney(Math.abs(t.profit))}</td>
+      <td class="${t.profit>=0?'green':'red'}">${((t.sellPrice-t.buyPrice)/t.buyPrice*100).toFixed(1)}%</td>
+    </tr>`).join('');
+  }
+}
+
+// ═══════════════════════════════════
+// EXPORT / IMPORT
+// ═══════════════════════════════════
+function exportData(){
+  const data={version:'v4',exported:new Date().toISOString(),portfolio:getPF(),history:getHist(),paper:getPP(),simulation:getSim()};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`stock-hub-data-${new Date().toISOString().split('T')[0]}.json`;a.click();
+}
+function importData(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const d=JSON.parse(e.target.result);
+      if(d.portfolio)localStorage.setItem('pf',JSON.stringify(d.portfolio));
+      if(d.history)localStorage.setItem('hist',JSON.stringify(d.history));
+      if(d.paper)localStorage.setItem('pp',JSON.stringify(d.paper));
+      if(d.simulation)localStorage.setItem('sim',JSON.stringify(d.simulation));
+      alert('Data imported successfully! Portfolio, history, paper trades, and simulation restored.');
+      renderPortfolio();renderHistory();renderPaper();renderSim();
+    }catch(err){alert('Invalid file. Make sure you import a file exported from this app.');}
+  };
+  reader.readAsText(file);input.value='';
+}
+
+// ═══════════════════════════════════
+// INIT
+// ═══════════════════════════════════
+switchMarket('AU');
+document.getElementById('ptD').value=new Date().toISOString().split('T')[0];
+document.getElementById('htBD').value=new Date().toISOString().split('T')[0];
+document.getElementById('htSD').value=new Date().toISOString().split('T')[0];
+renderIPO();
+</script>
+</body>
+</html>

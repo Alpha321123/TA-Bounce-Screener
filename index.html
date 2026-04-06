@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Stock Research Hub — Version Select</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f7f7f5;color:#1a1a1a;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem}
+.container{max-width:680px;width:100%}
+h1{font-size:24px;font-weight:500;margin-bottom:6px}
+.sub{font-size:14px;color:#888;margin-bottom:2rem}
+.versions{display:grid;gap:12px}
+.ver-card{background:#fff;border:1px solid #e8e8e5;border-radius:12px;padding:1.1rem 1.4rem;display:flex;align-items:center;justify-content:space-between;gap:16px;transition:border-color 0.15s}
+.ver-card:hover{border-color:#378ADD}
+.ver-card.latest{border:2px solid #378ADD}
+.ver-left{display:flex;align-items:center;gap:14px}
+.ver-num{font-size:22px;font-weight:600;color:#1a1a1a;min-width:36px}
+.ver-info h3{font-size:14px;font-weight:500;margin-bottom:3px}
+.ver-info p{font-size:12px;color:#888;line-height:1.5}
+.ver-badge{display:inline-block;font-size:10px;font-weight:500;padding:2px 7px;border-radius:8px;margin-right:4px;margin-top:4px}
+.badge-new{background:#EAF3DE;color:#27500A}
+.badge-cur{background:#E6F1FB;color:#0C447C}
+.badge-old{background:#f0f0ec;color:#888}
+.open-btn{padding:8px 18px;border-radius:8px;border:1px solid #ddd;background:#fff;font-size:13px;font-weight:500;cursor:pointer;text-decoration:none;color:#1a1a1a;white-space:nowrap}
+.open-btn:hover{background:#f7f7f5}
+.open-btn.primary{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.open-btn.primary:hover{background:#333}
+.transfer-box{background:#fff;border:1px solid #e8e8e5;border-radius:12px;padding:1.1rem 1.4rem;margin-top:1.5rem}
+.transfer-box h3{font-size:14px;font-weight:500;margin-bottom:8px}
+.transfer-box p{font-size:13px;color:#555;line-height:1.6}
+.transfer-steps{margin-top:8px;font-size:13px;color:#555;line-height:1.9}
+.transfer-steps span{display:inline-block;background:#f0f0ec;border-radius:4px;padding:1px 7px;font-family:monospace;font-size:12px;margin:0 2px}
+.footer{margin-top:1.5rem;font-size:12px;color:#aaa;text-align:center}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Stock Research Hub</h1>
+  <p class="sub">Select a version to open. Your data transfers between versions using Export/Import.</p>
+
+  <div class="versions" id="versionList">
+    <!-- Versions are defined below in JS and rendered dynamically -->
+  </div>
+
+  <div class="transfer-box">
+    <h3>How to transfer your data between versions</h3>
+    <p>All your portfolio, trade history, paper trades, and simulation data is stored in your browser. To carry it forward to a new version:</p>
+    <div class="transfer-steps">
+      1. Open your <strong>current version</strong><br>
+      2. Go to <span>Export data</span> in the sidebar (or click ⬆️ Export data)<br>
+      3. Save the <span>.json</span> file to your computer<br>
+      4. Open the <strong>new version</strong><br>
+      5. Go to <span>Import data</span> and select the saved file<br>
+      6. All your data is restored instantly ✓
+    </div>
+  </div>
+
+  <div class="footer">Data is stored locally in your browser · No account required · Works offline after first load</div>
+</div>
+
+<script>
+// Add new versions here as you upload them
+const VERSIONS = [
+  {
+    id: 'v4',
+    label: 'Version 4',
+    file: 'v4.html',
+    date: '2025',
+    status: 'latest',
+    features: [
+      'AU 🇦🇺 / US 🇺🇸 market switcher',
+      'Clock + market open/close top-right',
+      'CommSec brokerage (AU & US)',
+      'Auto-simulation (score >80 strategy)',
+      'Liquidity score + volume filter',
+      'Share quantity suggestion',
+      'Export / Import data (JSON)',
+      'Mining, Finance, Energy sectors',
+      'Paper trade log with date & time',
+      'Drop reason via AI',
+    ]
+  },
+  {
+    id: 'v3',
+    label: 'Version 3',
+    file: 'v3.html',
+    date: '2025',
+    status: 'old',
+    features: [
+      'Multi-page navigation',
+      'Portfolio + trade history',
+      'Paper trading simulator',
+      'IPO tracker',
+      'Glossary panel',
+      'Market clock',
+    ]
+  },
+  {
+    id: 'v2',
+    label: 'Version 2',
+    file: 'v2.html',
+    date: '2025',
+    status: 'old',
+    features: [
+      'TA screener (fixed RSI)',
+      'Watchlist',
+      'Column sorting',
+      'ASX sector added',
+    ]
+  },
+  {
+    id: 'v1',
+    label: 'Version 1',
+    file: 'v1.html',
+    date: '2025',
+    status: 'old',
+    features: [
+      'Basic screener',
+      'RSI, SMA20, volume signals',
+      'Biotech/Tech/General sectors',
+    ]
+  },
+];
+
+const list = document.getElementById('versionList');
+VERSIONS.forEach(v => {
+  const isLatest = v.status === 'latest';
+  const card = document.createElement('div');
+  card.className = 'ver-card' + (isLatest ? ' latest' : '');
+  const badgeHtml = isLatest
+    ? '<span class="ver-badge badge-new">Latest</span>'
+    : '<span class="ver-badge badge-old">Older</span>';
+  card.innerHTML = `
+    <div class="ver-left">
+      <div class="ver-num">${v.id}</div>
+      <div class="ver-info">
+        <h3>${v.label} ${badgeHtml}</h3>
+        <p>${v.features.slice(0, 3).join(' · ')}${v.features.length > 3 ? ` · +${v.features.length - 3} more` : ''}</p>
+      </div>
+    </div>
+    <a href="${v.file}" class="open-btn ${isLatest ? 'primary' : ''}">Open →</a>`;
+  list.appendChild(card);
+});
+</script>
+</body>
+</html>
