@@ -1,0 +1,1692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Stock Research Hub v4</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f7f7f5;color:#1a1a1a;min-height:100vh;display:flex;flex-direction:column}
+.mkt-bar{background:#1a1a1a;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;height:44px;flex-shrink:0;gap:12px;flex-wrap:wrap}
+.mkt-tabs{display:flex}
+.mkt-tab{padding:0 16px;height:44px;display:flex;align-items:center;font-size:13px;cursor:pointer;color:#aaa;border-bottom:2px solid transparent}
+.mkt-tab.active{color:#fff;border-bottom-color:#378ADD}
+.mkt-tab:hover{color:#ddd}
+.mkt-right{display:flex;align-items:center;gap:12px}
+.clock-block{text-align:right}
+.clock-date{font-size:10px;color:#888}
+.clock-time{font-size:12px;font-weight:500;font-variant-numeric:tabular-nums;color:#ccc}
+.mkt-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;padding:2px 7px;border-radius:7px;white-space:nowrap}
+.mo{background:#1D9E7520;color:#5DCAA5}.mc{background:#E24B4A20;color:#F09595}.mp{background:#EF9F2720;color:#FAC775}
+.dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}.do{background:#5DCAA5}.dc{background:#F09595}.dp{background:#FAC775}
+.shell{display:flex;flex:1;min-height:0}
+.sidebar{width:185px;background:#fff;border-right:1px solid #e8e8e5;flex-shrink:0;position:sticky;top:44px;height:calc(100vh - 44px);overflow-y:auto;display:flex;flex-direction:column}
+.content{flex:1;min-width:0;padding:1.25rem 1.75rem;overflow-y:auto}
+.page{display:none}.page.active{display:block}
+.nav-sec{padding:9px 0 2px}
+.nav-lbl{font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;padding:0 13px;margin-bottom:2px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 13px;font-size:13px;color:#555;cursor:pointer;border-left:2px solid transparent;user-select:none}
+.nav-item:hover{background:#f7f7f5;color:#1a1a1a}
+.nav-item.active{background:#EFF6FF;color:#185FA5;border-left-color:#378ADD;font-weight:500}
+.nav-icon{font-size:13px;width:15px;text-align:center}
+.nav-div{height:1px;background:#f0f0ec;margin:5px 0}
+.g-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:200}
+.g-overlay.open{display:block}
+.g-panel{position:fixed;right:0;top:0;bottom:0;width:360px;background:#fff;box-shadow:-4px 0 20px rgba(0,0,0,.1);z-index:201;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .25s}
+.g-panel.open{transform:translateX(0)}
+.g-head{padding:1rem 1.3rem;border-bottom:1px solid #e8e8e5;display:flex;justify-content:space-between;align-items:center}
+.g-head h2{font-size:15px;font-weight:500}
+.g-body{flex:1;overflow-y:auto;padding:.9rem 1.3rem}
+.g-search{width:100%;padding:6px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px;margin-bottom:.9rem;font-family:inherit}
+.g-item{margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid #f0f0ec}
+.g-item:last-child{border-bottom:none}
+.g-term{font-size:13px;font-weight:600;margin-bottom:3px;display:flex;align-items:center;gap:6px}
+.g-def{font-size:12px;color:#555;line-height:1.6}
+.g-link{display:inline-block;margin-top:4px;font-size:11px;color:#378ADD;text-decoration:none}
+.g-link:hover{text-decoration:underline}
+.g-tag{font-size:10px;padding:1px 5px;border-radius:4px;font-weight:400}
+.t-ta{background:#EEEDFE;color:#534AB7}.t-fund{background:#E1F5EE;color:#085041}.t-risk{background:#FCEBEB;color:#791F1F}
+select,button,input{font-family:inherit}
+.btn{font-size:13px;border-radius:8px;border:1px solid #ddd;padding:5px 12px;background:#fff;color:#1a1a1a;cursor:pointer}
+.btn:hover{background:#f7f7f5}.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-primary{background:#1a1a1a;color:#fff;border-color:#1a1a1a}.btn-primary:hover{background:#333}
+.btn-green{background:#EAF3DE;color:#27500A;border-color:#9FE1CB}
+.btn-red{background:#FCEBEB;color:#791F1F;border-color:#F09595}
+.btn-blue{background:#E6F1FB;color:#0C447C;border-color:#85B7EB}
+.btn-sm{padding:3px 8px;font-size:12px}
+input[type=text],input[type=number],input[type=date],select{border:1px solid #ddd;border-radius:8px;padding:5px 9px;font-size:13px;background:#fff;color:#1a1a1a;outline:none}
+input:focus,select:focus{border-color:#378ADD;box-shadow:0 0 0 2px #378ADD20}
+.card{background:#fff;border:1px solid #e8e8e5;border-radius:12px;overflow:hidden;margin-bottom:1rem}
+.card-head{padding:.85rem 1.1rem;border-bottom:1px solid #e8e8e5;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.card-head h3{font-size:14px;font-weight:500}
+.card-body{padding:1rem 1.1rem}
+.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:.9rem}
+.sg2{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+.sg3{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:.9rem}
+.stat{background:#fff;border:1px solid #e8e8e5;border-radius:9px;padding:.8rem .9rem}
+.stat-lbl{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.stat-val{font-size:19px;font-weight:500}
+.stat-sub{font-size:11px;color:#aaa;margin-top:2px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-size:11px;font-weight:500;color:#888;text-transform:uppercase;letter-spacing:.05em;padding:8px 10px;border-bottom:1px solid #e8e8e5;background:#fafaf8;white-space:nowrap;cursor:pointer;user-select:none}
+th:hover{color:#333}
+td{padding:9px 10px;border-bottom:1px solid #f0f0ec;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafaf8}
+.tlink{font-weight:600;color:#1a1a1a;text-decoration:none}.tlink:hover{color:#378ADD;text-decoration:underline}
+.cname{font-size:11px;color:#888;display:block;margin-top:1px}
+.red{color:#A32D2D;font-weight:500}.green{color:#3B6D11;font-weight:500}.amber{color:#854F0B}.muted{color:#888}
+.pill{display:inline-block;font-size:11px;padding:2px 6px;border-radius:9px;font-weight:500}
+.pill-s{background:#EAF3DE;color:#27500A}.pill-m{background:#FAEEDA;color:#633806}.pill-w{background:#FCEBEB;color:#791F1F}.pill-b{background:#E6F1FB;color:#0C447C}
+.bw{display:inline-block;width:50px;height:6px;background:#eee;border-radius:3px;overflow:hidden;vertical-align:middle;margin-right:5px}
+.bf{height:100%;border-radius:3px}
+.skel{background:#eee;border-radius:3px;display:inline-block;animation:pulse 1.2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.empty{padding:2.5rem;text-align:center;color:#aaa;font-size:14px;line-height:1.9}
+.prog-w{height:3px;background:#eee;border-radius:2px;margin-bottom:.6rem;overflow:hidden;display:none}
+.prog-f{height:100%;background:#378ADD;border-radius:2px;transition:width .3s}
+.sbar{font-size:12px;color:#888;margin-bottom:.6rem;min-height:16px}
+.err{background:#FCEBEB;border-radius:9px;padding:.75rem 1rem;color:#791F1F;font-size:13px;margin-bottom:.7rem}
+.warn{background:#FAEEDA;border-radius:9px;padding:.6rem 1rem;font-size:12px;color:#633806;margin-bottom:.6rem}
+.info{background:#E6F1FB;border-radius:9px;padding:.6rem 1rem;font-size:12px;color:#0C447C;margin-bottom:.7rem;line-height:1.6}
+.success{background:#EAF3DE;border-radius:9px;padding:.6rem 1rem;font-size:12px;color:#27500A;margin-bottom:.7rem}
+.ptitle{font-size:19px;font-weight:500;margin-bottom:3px}
+.psub{font-size:13px;color:#888;margin-bottom:1rem}
+.fr{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:.8rem}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg label{font-size:12px;color:#555;font-weight:500}
+.badge-au{display:inline-block;background:#E1F5EE;color:#085041;font-size:10px;padding:1px 5px;border-radius:4px;font-weight:500;margin-left:3px}
+.badge-us{display:inline-block;background:#E6F1FB;color:#0C447C;font-size:10px;padding:1px 5px;border-radius:4px;font-weight:500;margin-left:3px}
+.bot-bar{height:6px;border-radius:3px;flex:1;background:#eee;overflow:hidden;max-width:80px}
+.bot-fill{height:100%;border-radius:3px}
+.ss{display:inline-block;font-size:11px;padding:2px 6px;border-radius:7px;font-weight:500}
+.ss-h{background:#E6F1FB;color:#0C447C}.ss-c{background:#FAEEDA;color:#633806}.ss-s{background:#FCEBEB;color:#791F1F}
+.hold-badge{display:inline-block;font-size:11px;padding:2px 6px;border-radius:7px;background:#f0f0ec;color:#555;white-space:nowrap}
+.near-sell{background:#FAEEDA20;border-left:3px solid #EF9F27}
+.suggest-box{background:#EAF3DE;border-radius:6px;padding:3px 8px;font-size:11px;color:#27500A;display:inline-block;margin-top:3px}
+.notify-banner{background:#FAEEDA;border:1px solid #FAC775;border-radius:9px;padding:.7rem 1rem;font-size:13px;color:#633806;margin-bottom:.8rem;display:none}
+/* Settings page */
+.setting-group{margin-bottom:1.5rem}
+.setting-group h3{font-size:14px;font-weight:500;margin-bottom:.75rem;padding-bottom:.5rem;border-bottom:1px solid #f0f0ec}
+.setting-row{display:grid;grid-template-columns:1fr 180px 120px;gap:12px;align-items:center;padding:.6rem 0;border-bottom:1px solid #fafaf8}
+.setting-row:last-child{border-bottom:none}
+.setting-lbl{font-size:13px;font-weight:500}
+.setting-desc{font-size:11px;color:#888;margin-top:2px}
+.setting-input{display:flex;align-items:center;gap:6px}
+.setting-unit{font-size:12px;color:#888}
+@media(max-width:768px){.sidebar{display:none}.content{padding:.9rem}.sg{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<div class="mkt-bar">
+  <div class="mkt-tabs">
+    <div class="mkt-tab active" id="tab-au" onclick="switchMarket('AU')">🇦🇺 ASX (Australia)</div>
+    <div class="mkt-tab" id="tab-us" onclick="switchMarket('US')">🇺🇸 US Markets</div>
+  </div>
+  <div class="mkt-right">
+    <div id="mktBadges" style="display:flex;gap:6px"></div>
+    <div class="clock-block" id="clockBlock"></div>
+    <button class="btn btn-sm" style="background:transparent;color:#888;border-color:#444;font-size:11px" onclick="toggleGlossary()">Glossary</button>
+  </div>
+</div>
+
+<div class="shell">
+<div class="sidebar">
+  <div class="nav-sec">
+    <div class="nav-lbl">Research</div>
+    <div class="nav-item active" onclick="nav('screener')"><span class="nav-icon">🔍</span>Screener</div>
+    <div class="nav-item" onclick="nav('search')"><span class="nav-icon">📊</span>Stock search</div>
+    <div class="nav-item" onclick="nav('ipo')"><span class="nav-icon">🚀</span>IPO tracker</div>
+    <div class="nav-item" onclick="nav('news')"><span class="nav-icon">📰</span>Market news</div>
+  </div>
+  <div class="nav-div"></div>
+  <div class="nav-sec">
+    <div class="nav-lbl">Portfolio</div>
+    <div class="nav-item" onclick="nav('portfolio')"><span class="nav-icon">💼</span>My portfolio</div>
+    <div class="nav-item" onclick="nav('history')"><span class="nav-icon">📋</span>Trade history</div>
+    <div class="nav-item" onclick="nav('paper')"><span class="nav-icon">🎮</span>Paper trading</div>
+    <div class="nav-item" onclick="nav('sim')"><span class="nav-icon">🤖</span>Auto-simulation</div>
+  </div>
+  <div class="nav-div"></div>
+  <div class="nav-sec">
+    <div class="nav-lbl">Tools</div>
+    <div class="nav-item" onclick="nav('settings')"><span class="nav-icon">⚙️</span>Settings</div>
+    <div class="nav-item" onclick="exportData()"><span class="nav-icon">⬆️</span>Export data</div>
+    <div class="nav-item" onclick="document.getElementById('importFile').click()"><span class="nav-icon">⬇️</span>Import data</div>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(this)">
+    <div class="nav-item" onclick="toggleGlossary()"><span class="nav-icon">📖</span>Glossary</div>
+  </div>
+</div>
+
+<div class="content">
+
+<!-- SCREENER -->
+<div class="page active" id="page-screener">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:3px"><div class="ptitle">TA Bounce Screener <span id="mktLabel" class="badge-au">ASX</span></div><button class="btn btn-sm btn-blue" onclick="showHelp('screener')">? How to use</button></div>
+  <div class="psub">Stocks with sharp recent drops and high bounce potential. Volume and liquidity weighted.</div>
+  <div class="fr">
+    <div class="fg"><label>Sector</label><select id="sectorSel"></select></div>
+    <div class="fg"><label>Min drop</label><select id="dropSel"><option value="5">Drop &gt;5%</option><option value="10" selected>Drop &gt;10%</option><option value="15">Drop &gt;15%</option><option value="20">Drop &gt;20%</option></select></div>
+    <div class="fg"><label>Min vol/day</label><select id="volSel"><option value="0">Any</option><option value="100">100K+</option><option value="500" selected>500K+</option><option value="1000">1M+</option></select></div>
+    <button class="btn btn-primary" id="scanBtn" onclick="runScan()">Scan now</button>
+  </div>
+  <div class="info" id="scInfo" style="font-size:12px">
+    <strong>Bounce score:</strong> RSI below 30 (40pts) + below SMA20 (30pts) + volume spike (20pts) + drop size (10pts). <strong>Liquidity:</strong> stocks under 500K daily volume are penalised — thin markets mean signals often don't translate to real price moves. <strong>Near bottom:</strong> proximity to 52-week low. <strong>Hold suggestion:</strong> estimated days to hold based on historical RSI cycle length.
+  </div>
+  <div id="scNotify" class="notify-banner"></div>
+  <div class="prog-w" id="sp"><div class="prog-f" id="spf" style="width:0%"></div></div>
+  <div class="sbar" id="ss">Select sector and press Scan now.</div>
+  <div id="serr"></div><div id="swarn"></div>
+  <div class="sg" id="scStats" style="display:none">
+    <div class="stat"><div class="stat-lbl">Loaded</div><div class="stat-val" id="stL">—</div></div>
+    <div class="stat"><div class="stat-lbl">Matched</div><div class="stat-val" id="stM">—</div></div>
+    <div class="stat"><div class="stat-lbl">Avg RSI</div><div class="stat-val" id="stR">—</div></div>
+    <div class="stat"><div class="stat-lbl">Scan time</div><div class="stat-val" id="stT">—</div></div>
+  </div>
+  <div style="font-size:12px;color:#888;margin-bottom:.6rem;display:flex;gap:10px;flex-wrap:wrap" id="scLeg" style="display:none">
+    <span><span class="pill pill-s">Strong</span> 75+</span>
+    <span><span class="pill pill-m">Moderate</span> 50–74</span>
+    <span><span class="pill pill-w">Weak</span> &lt;50</span>
+    <span>Near bottom: bar left = near 52-wk low · Hold: estimated days to sell target</span>
+  </div>
+  <div class="card" id="scCard" style="display:none"><div style="overflow-x:auto">
+    <table><thead><tr>
+      <th onclick="sortSc('ticker')">Ticker ↕</th>
+      <th onclick="sortSc('cur')">Price ↕</th>
+      <th onclick="sortSc('drop')">1M drop ↕</th>
+      <th onclick="sortSc('rsi')">RSI ↕</th>
+      <th onclick="sortSc('pvs')">vs SMA20 ↕</th>
+      <th onclick="sortSc('vs')">Vol spike ↕</th>
+      <th>Liquidity</th>
+      <th onclick="sortSc('score')">Score ↕</th>
+      <th>Near bottom</th>
+      <th>Sell signal</th>
+      <th>Hold est.</th>
+      <th>Drop reason</th>
+      <th>Actions</th>
+    </tr></thead>
+    <tbody id="scBody"></tbody></table>
+  </div></div>
+</div>
+
+<!-- SEARCH -->
+<div class="page" id="page-search">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:3px"><div class="ptitle">Stock search</div><button class="btn btn-sm btn-blue" onclick="showHelp('search')">? How to use</button></div>
+  <div class="psub">Analyse any ticker. Add .AX suffix for ASX stocks (e.g. CSL.AX).</div>
+  <div class="fr">
+    <div class="fg"><label>Ticker</label><input type="text" id="searchTicker" placeholder="CSL.AX or MRNA" style="width:180px" onkeydown="if(event.key==='Enter')searchStock()"></div>
+    <button class="btn btn-primary" onclick="searchStock()">Analyse</button>
+  </div>
+  <div class="sbar" id="searchSt"></div>
+  <div id="searchRes"></div>
+</div>
+
+<!-- IPO -->
+<div class="page" id="page-ipo">
+  <div class="ptitle">IPO tracker</div>
+  <div class="psub">Recent and upcoming IPOs on ASX and US markets.</div>
+  <div class="info">An IPO (Initial Public Offering) is when a private company first sells shares publicly. Early investors can profit if the stock rises — but many IPOs fall below listing price within months. Lock-up expiry (when insiders can sell) often triggers a price drop. Strategy: wait 1–3 months post-listing before buying. <a href="https://www2.asx.com.au/investors/investment-tools-and-resources/investment-options/shares/ipos" target="_blank" style="color:#0C447C">ASX IPOs →</a> &nbsp;<a href="https://stockanalysis.com/ipos/" target="_blank" style="color:#0C447C">US IPOs →</a></div>
+  <div class="card"><div class="card-head"><h3>Recent &amp; upcoming IPOs</h3></div><div class="card-body" id="ipoBody"></div></div>
+</div>
+
+<!-- PORTFOLIO -->
+<div class="page" id="page-portfolio">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:3px"><div class="ptitle">My portfolio (real money)</div><button class="btn btn-sm btn-blue" onclick="showHelp('portfolio')">? How to use</button></div>
+  <div class="psub">Record real trades with CommSec brokerage. Hold suggestions and sell alerts shown.</div>
+  <div id="pfNotify" class="notify-banner"></div>
+  <div class="card"><div class="card-head"><h3>Add position</h3></div><div class="card-body">
+    <div class="fr">
+      <div class="fg"><label>Ticker</label><input type="text" id="ptT" placeholder="CSL.AX" style="width:100px"></div>
+      <div class="fg"><label>Shares</label><input type="number" id="ptS" placeholder="10" style="width:80px" min="1"></div>
+      <div class="fg"><label>Buy price $</label><input type="number" id="ptP" placeholder="280.00" style="width:100px" step="0.01"></div>
+      <div class="fg"><label>Date</label><input type="date" id="ptD" style="width:130px"></div>
+      <button class="btn btn-primary" onclick="addPosition()">Add</button>
+    </div>
+    <div class="sbar" id="ptSt"></div>
+  </div></div>
+  <div class="sg" id="pfStats" style="display:none">
+    <div class="stat"><div class="stat-lbl">Invested</div><div class="stat-val" id="pfInv">—</div><div class="stat-sub">incl. brokerage</div></div>
+    <div class="stat"><div class="stat-lbl">Current value</div><div class="stat-val" id="pfVal">—</div></div>
+    <div class="stat"><div class="stat-lbl">Total P&amp;L</div><div class="stat-val" id="pfPnl">—</div></div>
+    <div class="stat"><div class="stat-lbl">Positions</div><div class="stat-val" id="pfCnt">—</div></div>
+  </div>
+  <div class="card" id="pfCard" style="display:none">
+    <div class="card-head"><h3>Open positions</h3><button class="btn btn-sm" onclick="refreshPortfolio()">Refresh prices</button></div>
+    <div style="overflow-x:auto"><table><thead><tr>
+      <th>Ticker</th><th>Shares</th><th>Buy $</th><th>Brok.</th><th>Current $</th><th>P&amp;L $</th><th>P&amp;L %</th><th>Days held</th><th>Hold target</th><th>Sell signal</th><th></th>
+    </tr></thead><tbody id="pfBody"></tbody></table></div>
+  </div>
+</div>
+
+<!-- HISTORY -->
+<div class="page" id="page-history">
+  <div class="ptitle">Trade history</div>
+  <div class="psub">All closed trades. Export data to transfer to future versions.</div>
+  <div class="card"><div class="card-head"><h3>Record closed trade</h3></div><div class="card-body">
+    <div class="fr">
+      <div class="fg"><label>Ticker</label><input type="text" id="htT" style="width:90px" placeholder="CSL.AX"></div>
+      <div class="fg"><label>Shares</label><input type="number" id="htS" style="width:75px"></div>
+      <div class="fg"><label>Buy $</label><input type="number" id="htB" style="width:85px" step="0.01"></div>
+      <div class="fg"><label>Sell $</label><input type="number" id="htSl" style="width:85px" step="0.01"></div>
+      <div class="fg"><label>Buy date</label><input type="date" id="htBD" style="width:125px"></div>
+      <div class="fg"><label>Sell date</label><input type="date" id="htSD" style="width:125px"></div>
+      <button class="btn btn-primary" onclick="addHistory()">Record</button>
+    </div>
+  </div></div>
+  <div class="sg" id="htStats" style="display:none">
+    <div class="stat"><div class="stat-lbl">Trades</div><div class="stat-val" id="htTot">—</div></div>
+    <div class="stat"><div class="stat-lbl">Winners</div><div class="stat-val green" id="htW">—</div></div>
+    <div class="stat"><div class="stat-lbl">Net profit</div><div class="stat-val" id="htP">—</div></div>
+    <div class="stat"><div class="stat-lbl">Win rate</div><div class="stat-val" id="htR">—</div></div>
+  </div>
+  <div class="card" id="htCard" style="display:none"><div style="overflow-x:auto">
+    <table><thead><tr><th>Ticker</th><th>Shares</th><th>Buy $</th><th>Sell $</th><th>Brok.</th><th>Net profit</th><th>Return %</th><th>Days</th><th>Dates</th><th></th></tr></thead>
+    <tbody id="htBody"></tbody></table>
+  </div></div>
+</div>
+
+<!-- PAPER TRADING -->
+<div class="page" id="page-paper">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:3px"><div class="ptitle">Paper trading simulator</div><button class="btn btn-sm btn-blue" onclick="showHelp('paper')">? How to use</button></div>
+  <div class="psub">Virtual money, real prices, CommSec brokerage. Date/time logged every trade.</div>
+  <div class="card"><div class="card-head"><h3>Account</h3>
+    <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap">
+      <label style="font-size:12px">Starting cash $</label>
+      <input type="number" id="ppSC" style="width:100px" step="500">
+      <button class="btn btn-sm btn-blue" onclick="setPaperCash()">Set</button>
+      <button class="btn btn-sm" onclick="refreshPaper()">Refresh</button>
+      <button class="btn btn-sm btn-red" onclick="resetPaper()">Reset</button>
+    </div>
+  </div><div class="card-body">
+    <div class="sg">
+      <div class="stat"><div class="stat-lbl">Cash</div><div class="stat-val" id="ppCash">—</div></div>
+      <div class="stat"><div class="stat-lbl">Portfolio</div><div class="stat-val" id="ppPort">—</div></div>
+      <div class="stat"><div class="stat-lbl">P&amp;L</div><div class="stat-val" id="ppPnl">—</div></div>
+      <div class="stat"><div class="stat-lbl">Return</div><div class="stat-val" id="ppRet">—</div></div>
+    </div>
+  </div></div>
+  <div class="card"><div class="card-head"><h3>Place trade</h3></div><div class="card-body">
+    <div class="fr">
+      <div class="fg"><label>Ticker</label><input type="text" id="ppT" placeholder="CSL.AX" style="width:100px"></div>
+      <div class="fg"><label>Shares</label><input type="number" id="ppS" placeholder="10" style="width:75px" min="1"></div>
+      <div class="fg"><label>Action</label><select id="ppA"><option value="buy">Buy</option><option value="sell">Sell</option></select></div>
+      <button class="btn btn-primary" onclick="paperTrade()">Execute</button>
+    </div>
+    <div class="sbar" id="ppSt"></div>
+  </div></div>
+  <div class="card" id="ppCard" style="display:none"><div class="card-head"><h3>Virtual positions</h3></div>
+    <div style="overflow-x:auto"><table><thead><tr>
+      <th>Ticker</th><th>Shares</th><th>Avg buy</th><th>Current</th><th>P&amp;L $</th><th>P&amp;L %</th><th>Days held</th><th>Hold target</th><th>Sell signal</th><th>Suggestion</th><th></th>
+    </tr></thead><tbody id="ppBody"></tbody></table></div>
+  </div>
+  <div class="card" id="ppLogCard" style="display:none"><div class="card-head"><h3>Trade log</h3></div>
+    <div style="overflow-x:auto"><table><thead><tr>
+      <th>Date &amp; time</th><th>Ticker</th><th>Action</th><th>Shares</th><th>Price $</th><th>Brok.</th><th>Total</th>
+    </tr></thead><tbody id="ppLogBody"></tbody></table></div>
+  </div>
+</div>
+
+<!-- AUTO-SIMULATION -->
+<div class="page" id="page-sim">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:3px">
+    <div class="ptitle">Auto-simulation</div>
+    <button class="btn btn-sm btn-blue" onclick="showHelp('sim')">? How this works</button>
+  </div>
+  <div class="psub">Run and compare up to 3 strategies. Automatically buys on score threshold, sells on signal. CommSec brokerage deducted.</div>
+  <div class="fr" style="margin-bottom:.5rem">
+    <label style="font-size:12px;color:#555;font-weight:500">Strategy slot:</label>
+    <button class="btn btn-sm" id="simSlot0" onclick="selectSimSlot(0)" style="background:#1a1a1a;color:#fff">Strategy A</button>
+    <button class="btn btn-sm" id="simSlot1" onclick="selectSimSlot(1)">Strategy B</button>
+    <button class="btn btn-sm" id="simSlot2" onclick="selectSimSlot(2)">Strategy C</button>
+    <button class="btn btn-sm" onclick="showSimComparison()">Compare all ↗</button>
+  </div>
+  <div class="info">Every scan, the simulation buys all stocks with score above the threshold. It sells when the sell signal fires. CommSec brokerage deducted on every trade. Results show whether this strategy would have been profitable. <em>Past results do not guarantee future returns.</em></div>
+  <div class="card"><div class="card-head"><h3>Simulation settings</h3></div><div class="card-body">
+    <div class="fr">
+      <div class="fg"><label>Starting cash $</label><input type="number" id="simSC" value="10000" style="width:110px"></div>
+      <div class="fg"><label>Max per trade $</label><input type="number" id="simMT" value="2000" style="width:110px"></div>
+      <div class="fg"><label>Buy score threshold</label><input type="number" id="simThr" value="80" min="50" max="100" style="width:90px"></div>
+      <div class="fg"><label>Sell trigger</label><select id="simSell" style="width:150px"><option value="any">Any sell signal</option><option value="strong">Strong sell only</option><option value="pct">P&amp;L % target</option></select></div>
+      <div class="fg"><label>P&amp;L target % (if above)</label><input type="number" id="simPct" value="20" style="width:80px"></div>
+    </div>
+    <div class="fr">
+      <button class="btn btn-primary" onclick="runSimScan()">Scan &amp; simulate</button>
+      <button class="btn btn-sm btn-red" onclick="resetSim()">Reset simulation</button>
+    </div>
+  </div></div>
+  <div class="sbar" id="simSt"></div>
+  <div class="sg" id="simStats" style="display:none">
+    <div class="stat"><div class="stat-lbl">Starting cash</div><div class="stat-val" id="simS">—</div></div>
+    <div class="stat"><div class="stat-lbl">Current value</div><div class="stat-val" id="simV">—</div></div>
+    <div class="stat"><div class="stat-lbl">Net gain/loss</div><div class="stat-val" id="simG">—</div></div>
+    <div class="stat"><div class="stat-lbl">Win rate</div><div class="stat-val" id="simWR">—</div></div>
+  </div>
+  <div class="card" id="simPosCard" style="display:none"><div class="card-head"><h3>Open sim positions</h3></div>
+    <div style="overflow-x:auto"><table><thead><tr><th>Ticker</th><th>Buy date</th><th>Buy $</th><th>Current $</th><th>P&amp;L</th><th>Score at buy</th><th>Hold est.</th><th>Sell signal</th></tr></thead>
+    <tbody id="simPosBody"></tbody></table></div>
+  </div>
+  <div class="card" id="simHistCard" style="display:none"><div class="card-head"><h3>Simulation history</h3></div>
+    <div style="overflow-x:auto"><table><thead><tr><th>Ticker</th><th>Buy</th><th>Sell</th><th>Buy $</th><th>Sell $</th><th>Brok.</th><th>Profit</th><th>Return %</th><th>Trigger</th></tr></thead>
+    <tbody id="simHistBody"></tbody></table></div>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div class="page" id="page-settings">
+  <div class="ptitle">Settings</div>
+  <div class="psub">Adjust all parameters without touching code. Changes apply immediately and are saved automatically.</div>
+  <div class="card"><div class="card-body" id="settingsBody"></div></div>
+  <button class="btn btn-primary" onclick="saveSettings()">Save all settings</button>
+  <button class="btn btn-sm" style="margin-left:8px" onclick="resetSettings()">Reset to defaults</button>
+  <div class="sbar" style="margin-top:.5rem" id="settingsSt"></div>
+</div>
+
+
+<!-- NEWS PAGE -->
+<div class="page" id="page-news">
+  <div class="ptitle">Market news &amp; sector impact</div>
+  <div class="psub">AI-generated news summaries with sector impact indicators. Updated each time you load.</div>
+  <div class="info">News is generated by AI based on general market knowledge. For live news, always verify with <a href="https://www.afr.com" target="_blank" style="color:#0C447C">AFR</a>, <a href="https://finance.yahoo.com/news" target="_blank" style="color:#0C447C">Yahoo Finance</a>, or <a href="https://www.abc.net.au/news/business" target="_blank" style="color:#0C447C">ABC Business</a>.</div>
+  <div class="fr">
+    <div class="fg"><label>Market focus</label>
+      <select id="newsMkt"><option value="AU">Australian (ASX)</option><option value="US">US Markets</option><option value="global">Global</option></select>
+    </div>
+    <button class="btn btn-primary" onclick="loadNews()">Load news summary</button>
+  </div>
+  <div class="sbar" id="newsSt">Press Load news summary to fetch AI-generated market news.</div>
+  <div id="newsBody"></div>
+</div>
+
+</div><!-- end content -->
+</div><!-- end shell -->
+
+<!-- Glossary -->
+<!-- Help panel -->
+<div class="help-overlay" id="helpOverlay" onclick="closeHelp()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:200"></div>
+<div class="help-panel" id="helpPanel" style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(0.95);width:min(600px,90vw);max-height:80vh;background:#fff;border-radius:14px;box-shadow:0 8px 40px rgba(0,0,0,.15);z-index:201;display:none;flex-direction:column;overflow:hidden">
+  <div style="padding:1rem 1.3rem;border-bottom:1px solid #e8e8e5;display:flex;justify-content:space-between;align-items:center">
+    <h2 style="font-size:15px;font-weight:500" id="helpTitle">Help</h2>
+    <button style="background:none;border:none;font-size:20px;cursor:pointer;color:#888" onclick="closeHelp()">×</button>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding:1.1rem 1.3rem;font-size:13px;color:#555;line-height:1.7" id="helpBody"></div>
+</div>
+
+<div class="g-overlay" id="gOverlay" onclick="toggleGlossary()"></div>
+<div class="g-panel" id="gPanel">
+  <div class="g-head"><h2>Glossary &amp; Learn</h2><button style="background:none;border:none;font-size:20px;cursor:pointer;color:#888" onclick="toggleGlossary()">×</button></div>
+  <div class="g-body">
+    <input class="g-search" type="text" placeholder="Search..." oninput="filterGloss(this.value)">
+    <div id="glossItems"></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+// ════════════════════════════════════════════
+// SETTINGS SYSTEM
+// ════════════════════════════════════════════
+const SETTING_DEFS = [
+  {key:'rsi_oversold',label:'RSI oversold threshold',desc:'RSI below this = oversold (buy signal). Default: 30',default:30,min:10,max:50,unit:''},
+  {key:'rsi_overbought',label:'RSI overbought threshold',desc:'RSI above this = overbought (sell signal). Default: 65',default:65,min:55,max:85,unit:''},
+  {key:'rsi_strong_sell',label:'RSI strong sell threshold',desc:'RSI above this = strong sell. Default: 75',default:75,min:65,max:95,unit:''},
+  {key:'sma_buy_pct',label:'SMA20 buy zone (%)',desc:'Stock must be this far below SMA20 to score full points. Default: 5',default:5,min:2,max:20,unit:'%'},
+  {key:'sma_sell_pct',label:'SMA20 sell zone (%)',desc:'Stock this far above SMA20 triggers "consider selling". Default: 10',default:10,min:5,max:30,unit:'%'},
+  {key:'vol_spike_min',label:'Volume spike minimum',desc:'Vol spike above this scores points. Default: 1.2x',default:1.2,min:1.0,max:3.0,step:0.1,unit:'×'},
+  {key:'liq_penalty_low',label:'Low liquidity threshold (K)',desc:'Avg daily vol below this = 50% score penalty. Default: 100K',default:100,min:10,max:500,unit:'K/day'},
+  {key:'liq_penalty_mid',label:'Mid liquidity threshold (K)',desc:'Avg daily vol below this = 20% score penalty. Default: 500K',default:500,min:100,max:2000,unit:'K/day'},
+  {key:'score_buy_threshold',label:'Simulation buy score',desc:'Auto-simulation buys stocks with score above this. Default: 80',default:80,min:50,max:100,unit:''},
+  {key:'paper_default_cash',label:'Paper trading default cash',desc:'Starting virtual cash for new paper trading accounts. Default: $10,000',default:10000,min:1000,max:1000000,unit:'$'},
+  {key:'suggest_pct',label:'Share suggestion % of cash',desc:'Suggest buying this % of available cash per stock. Default: 10%',default:10,min:1,max:30,unit:'%'},
+  {key:'hold_rsi_target',label:'RSI sell target for hold estimate',desc:'Estimated hold until RSI reaches this level. Default: 55',default:55,min:40,max:75,unit:''},
+  {key:'hold_days_base',label:'Base hold days',desc:'Minimum estimated hold days. Default: 5',default:5,min:1,max:30,unit:'days'},
+  {key:'hold_days_max',label:'Maximum hold days estimate',desc:'Cap on hold day estimate shown. Default: 90',default:90,min:14,max:365,unit:'days'},
+  {key:'brok_au_min',label:'AU brokerage minimum $',desc:'CommSec ASX minimum fee per trade. Default: $10',default:10,min:0,max:30,unit:'$'},
+  {key:'brok_au_pct',label:'AU brokerage rate (%)',desc:'CommSec ASX percentage fee. Default: 0.12%',default:0.12,min:0,max:1,step:0.01,unit:'%'},
+  {key:'brok_us_min',label:'US brokerage minimum USD',desc:'CommSec US minimum fee. Default: $19.95',default:19.95,min:0,max:50,step:0.01,unit:'USD'},
+  {key:'brok_us_pct',label:'US brokerage rate (%)',desc:'CommSec US percentage fee. Default: 0.31%',default:0.31,min:0,max:2,step:0.01,unit:'%'},
+  {key:'notify_sell_days',label:'Sell alert: days before hold target',desc:'Show sell notification when this many days from hold target. Default: 3',default:3,min:1,max:14,unit:'days'},
+];
+
+function getSettings(){
+  try{const s=JSON.parse(localStorage.getItem('settings')||'{}');
+    const out={};SETTING_DEFS.forEach(d=>{out[d.key]=s[d.key]!==undefined?s[d.key]:d.default;});return out;
+  }catch(e){const out={};SETTING_DEFS.forEach(d=>{out[d.key]=d.default;});return out;}
+}
+function saveSettings(){
+  const s={};
+  SETTING_DEFS.forEach(d=>{
+    const el=document.getElementById('s_'+d.key);
+    if(el)s[d.key]=parseFloat(el.value)||d.default;
+  });
+  localStorage.setItem('settings',JSON.stringify(s));
+  document.getElementById('settingsSt').textContent='Settings saved ✓';
+  setTimeout(()=>document.getElementById('settingsSt').textContent='',2000);
+}
+function resetSettings(){
+  if(!confirm('Reset all settings to defaults?'))return;
+  localStorage.removeItem('settings');
+  renderSettings();
+  document.getElementById('settingsSt').textContent='Reset to defaults ✓';
+  setTimeout(()=>document.getElementById('settingsSt').textContent='',2000);
+}
+function S(key){return getSettings()[key];}
+
+function renderSettings(){
+  const s=getSettings();
+  // Group by category
+  const groups={
+    'Screener signals':[0,1,2,3,4,5],
+    'Liquidity filters':[6,7],
+    'Simulation & suggestion':[8,9,10],
+    'Hold duration estimation':[11,12,13],
+    'Brokerage (CommSec)':[14,15,16,17],
+    'Notifications':[18]
+  };
+  let html='';
+  Object.entries(groups).forEach(([gname,idxs])=>{
+    html+=`<div class="setting-group"><h3>${gname}</h3>`;
+    idxs.forEach(i=>{
+      if(i>=SETTING_DEFS.length)return;
+      const d=SETTING_DEFS[i];
+      const val=s[d.key]!==undefined?s[d.key]:d.default;
+      const step=d.step||1;
+      html+=`<div class="setting-row">
+        <div><div class="setting-lbl">${d.label}</div><div class="setting-desc">${d.desc}</div></div>
+        <div class="setting-input">
+          <input type="number" id="s_${d.key}" value="${val}" min="${d.min||0}" max="${d.max||9999}" step="${step}" style="width:100px" onchange="saveSettings()">
+          <span class="setting-unit">${d.unit}</span>
+        </div>
+        <button class="btn btn-sm" onclick="document.getElementById('s_${d.key}').value=${d.default};saveSettings()">Reset</button>
+      </div>`;
+    });
+    html+='</div>';
+  });
+  document.getElementById('settingsBody').innerHTML=html;
+}
+
+// ════════════════════════════════════════════
+// MARKET DATA
+// ════════════════════════════════════════════
+let currentMarket='AU';
+const SECTORS={
+  AU:{
+    'Biotech/Pharma':{tickers:{'CSL.AX':'CSL','PNV.AX':'PolyNovo','IMM.AX':'Immutep','NEU.AX':'Neuren','RMD.AX':'ResMed','COH.AX':'Cochlear','SHL.AX':'Sonic Healthcare','TLX.AX':'Telix Pharma','PYC.AX':'PYC Therapeutics','OPT.AX':'Opthea','AVH.AX':'Avita Medical','RAC.AX':'Race Oncology','EBR.AX':'EBR Systems','NAN.AX':'Nanosonics','PRO.AX':'Pro Medicus','MVP.AX':'Medical Dev.','SOM.AX':'SomnoMed','IHL.AX':'Impedimed','1AD.AX':'Adalta','PAB.AX':'Patrys'}},
+    'Mining/Resources':{tickers:{'BHP.AX':'BHP','RIO.AX':'Rio Tinto','FMG.AX':'Fortescue','S32.AX':'South32','IGO.AX':'IGO','PLS.AX':'Pilbara Minerals','MIN.AX':'Mineral Resources','LYC.AX':'Lynas','ILU.AX':'Iluka','SFR.AX':'Sandfire','NST.AX':'Northern Star','EVN.AX':'Evolution Mining','NCM.AX':'Newcrest','RRL.AX':'Regis','WSA.AX':'Western Areas','GOR.AX':'Gold Road','CMM.AX':'Capricorn Metals','OZL.AX':'OZ Minerals','AWC.AX':'Alumina','NHC.AX':'New Hope'}},
+    'Technology':{tickers:{'WTC.AX':'WiseTech','XRO.AX':'Xero','APX.AX':'Appen','ALU.AX':'Altium','TNE.AX':'TechOne','MP1.AX':'Megaport','SEK.AX':'SEEK','CAR.AX':'CarSales','REA.AX':'REA Group','NXT.AX':'NEXTDC','HUB.AX':'Hub24','DTL.AX':'Data#3','IFM.AX':'Infomedia','BVS.AX':'Bravura','DXS.AX':'Dexus','MFG.AX':'Magellan','AMP.AX':'AMP','CAT.AX':'Catapult','DDR.AX':'Dicker Data','SXL.AX':'Southern Cross'}},
+    'Finance/Banks':{tickers:{'CBA.AX':'Commbank','WBC.AX':'Westpac','NAB.AX':'NAB','ANZ.AX':'ANZ','MQG.AX':'Macquarie','SUN.AX':'Suncorp','IAG.AX':'Insurance Aust.','QBE.AX':'QBE','ASX.AX':'ASX Ltd','PPT.AX':'Perpetual','BEN.AX':'Bendigo Bank','BOQ.AX':'Bank of Qld','GQG.AX':'GQG Partners','CNI.AX':'Centuria','AMP.AX':'AMP','PTM.AX':'Platinum Asset','MYS.AX':'Mystate','HGH.AX':'Heartland','LNK.AX':'Link Admin','APE.AX':'Eagers'}},
+    'Energy':{tickers:{'WPL.AX':'Woodside','STO.AX':'Santos','OSH.AX':'Oil Search','BPT.AX':'Beach Energy','KAR.AX':'Karoon','VEA.AX':'Viva Energy','NHC.AX':'New Hope','WHC.AX':'Whitehaven','ALD.AX':'Ampol','COE.AX':'Cooper Energy','STX.AX':'Strike Energy','HZN.AX':'Horizon Oil','SMR.AX':'Stanmore','TER.AX':'Terracom','GAS.AX':'Gas2Grid','MDL.AX':'Mineral Deposits','REC.AX':'Recharge Metals','NHT.AX':'Natural Health','PAN.AX':'Panoramic','AWC.AX':'Alumina'}},
+    'All ASX':{tickers:{}}
+  },
+  US:{
+    'Biotech/Pharma':{tickers:{MRNA:'Moderna',NVAX:'Novavax',BNTX:'BioNTech',SRPT:'Sarepta',IONS:'Ionis',BLUE:'bluebird bio',BEAM:'Beam',EDIT:'Editas',CRSP:'CRISPR Tx',ALNY:'Alnylam',ARWR:'Arrowhead',ACAD:'Acadia',KYMR:'Kymera',RCKT:'Rocket Pharma',RARE:'Ultragenyx',FOLD:'Amicus',DNLI:'Denali',NTLA:'Intellia',PRAX:'Praxis',SGMO:'Sangamo',VRTX:'Vertex',BMRN:'BioMarin',INSM:'Insmed',EXAS:'Exact Sciences',NKTR:'Nektar',FATE:'Fate Tx',HALO:'Halozyme',REGN:'Regeneron',SGEN:'Seagen',RETA:'Reata'}},
+    'Technology':{tickers:{SNAP:'Snap',PINS:'Pinterest',RBLX:'Roblox',PLTR:'Palantir',SOFI:'SoFi',HOOD:'Robinhood',PATH:'UiPath',AI:'C3.ai',SOUN:'SoundHound',ASTS:'AST SpaceMobile',IONQ:'IonQ',WOLF:'Wolfspeed',LAZR:'Luminar',RIVN:'Rivian',LCID:'Lucid',JOBY:'Joby',ACHR:'Archer',OPEN:'Opendoor',DKNG:'DraftKings',SPCE:'Virgin Galactic',XPEV:'XPeng',NIO:'NIO',BLNK:'Blink',CHPT:'ChargePoint',EVGO:'EVgo',SKLZ:'Skillz',FSR:'Fisker',GENI:'Genius Sports',MAPS:'WM Tech',BIRD:'Bird'}},
+    'Broad Market':{tickers:{AAPL:'Apple',TSLA:'Tesla',AMZN:'Amazon',GOOGL:'Alphabet',NVDA:'Nvidia',AMD:'AMD',PFE:'Pfizer',JNJ:'J&J',DIS:'Disney',NFLX:'Netflix',UBER:'Uber',F:'Ford',GM:'GM',NKE:'Nike',SBUX:'Starbucks',BA:'Boeing',GE:'GE',INTC:'Intel',META:'Meta',SHOP:'Shopify',PYPL:'PayPal',SQ:'Block',ROKU:'Roku',PTON:'Peloton',DOCU:'DocuSign',LMND:'Lemonade',ZOOM:'Zoom',WBD:'Warner Bros',PARA:'Paramount',OSCR:'Oscar Health'}},
+    'Finance':{tickers:{JPM:'JPMorgan',BAC:'Bank of America',WFC:'Wells Fargo',GS:'Goldman',MS:'Morgan Stanley',C:'Citigroup',AXP:'Amex',V:'Visa',MA:'Mastercard',PYPL:'PayPal',SQ:'Block',SOFI:'SoFi',HOOD:'Robinhood',AFRM:'Affirm',UPST:'Upstart',LC:'LendingClub',NU:'Nubank',DAVE:'Dave',CURO:'Curo',COIN:'Coinbase'}},
+    'Energy':{tickers:{XOM:'Exxon',CVX:'Chevron',COP:'ConocoPhillips',SLB:'Schlumberger',HAL:'Halliburton',OXY:'Occidental',MPC:'Marathon',PSX:'Phillips 66',VLO:'Valero',PXD:'Pioneer',DVN:'Devon',FANG:'Diamondback',APA:'APA Corp',CTRA:'Coterra',AR:'Antero',EQT:'EQT',RRC:'Range Resources',SM:'SM Energy',HES:'Hess',MRO:'Marathon Oil'}},
+    'All US':{tickers:{}}
+  }
+};
+function buildAll(){
+  let au={},us={};
+  Object.entries(SECTORS.AU).forEach(([k,v])=>{if(k!=='All ASX'&&v.tickers)Object.assign(au,v.tickers);});
+  Object.entries(SECTORS.US).forEach(([k,v])=>{if(k!=='All US'&&v.tickers)Object.assign(us,v.tickers);});
+  SECTORS.AU['All ASX'].tickers=au;SECTORS.US['All US'].tickers=us;
+}
+buildAll();
+function updateSectorOptions(){
+  const sel=document.getElementById('sectorSel'),prev=sel.value;
+  sel.innerHTML='';
+  Object.keys(SECTORS[currentMarket]).forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent=k;sel.appendChild(o);});
+  if(prev&&SECTORS[currentMarket][prev])sel.value=prev;
+}
+function switchMarket(mkt){
+  currentMarket=mkt;
+  document.getElementById('tab-au').classList.toggle('active',mkt==='AU');
+  document.getElementById('tab-us').classList.toggle('active',mkt==='US');
+  const lbl=document.getElementById('mktLabel');
+  if(lbl){lbl.className=mkt==='AU'?'badge-au':'badge-us';lbl.textContent=mkt;}
+  updateSectorOptions();
+}
+
+// ════════════════════════════════════════════
+// CLOCK
+// ════════════════════════════════════════════
+function updateClock(){
+  const now=new Date();
+  const aest=new Date(now.toLocaleString('en-US',{timeZone:'Australia/Brisbane'}));
+  const nyc=new Date(now.toLocaleString('en-US',{timeZone:'America/New_York'}));
+  const fmtD=d=>d.toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short',year:'2-digit'});
+  const fmtT=d=>d.toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+  const asxO=aest.getDay()>=1&&aest.getDay()<=5&&(aest.getHours()>10||(aest.getHours()===10))&&aest.getHours()<16;
+  const asxP=aest.getDay()>=1&&aest.getDay()<=5&&aest.getHours()>=7&&aest.getHours()<10;
+  const nycH=nyc.getHours(),nycM=nyc.getMinutes(),nycD=nyc.getDay();
+  const nycO=nycD>=1&&nycD<=5&&(nycH>9||(nycH===9&&nycM>=30))&&nycH<16;
+  const nycP=nycD>=1&&nycD<=5&&nycH>=4&&nycH<9;
+  function b(o,p,l){const c=o?'mo':p?'mp':'mc',dc=o?'do':p?'dp':'dc',t=o?'Open':p?'Pre':'Closed';return`<span class="mkt-badge ${c}"><span class="dot ${dc}"></span>${l} ${t}</span>`;}
+  document.getElementById('mktBadges').innerHTML=b(asxO,asxP,'ASX')+b(nycO,nycP,'NYSE');
+  document.getElementById('clockBlock').innerHTML=`<div class="clock-date">Brisbane ${fmtD(aest)}</div><div class="clock-time">${fmtT(aest)}</div><div class="clock-date" style="margin-top:2px">New York ${fmtD(nyc)}</div><div class="clock-time">${fmtT(nyc)}</div>`;
+}
+updateClock();setInterval(updateClock,1000);
+
+// ════════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════════
+function nav(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const pg=document.getElementById('page-'+id);if(pg)pg.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>{if((n.getAttribute('onclick')||'').includes("'"+id+"'"))n.classList.add('active');});
+  if(id==='portfolio')renderPortfolio();
+  if(id==='history')renderHistory();
+  if(id==='paper')renderPaper();
+  if(id==='sim')renderSim();
+  if(id==='ipo')renderIPO();
+  if(id==='settings')renderSettings();
+}
+
+// ════════════════════════════════════════════
+// GLOSSARY
+// ════════════════════════════════════════════
+const GLOSS=[
+  {term:'RSI',tag:'ta',tl:'Technical',def:'Relative Strength Index (0–100). Below 30 = oversold (potential buy signal). Above 70 = overbought (potential sell). Based on average gains vs losses over 14 days. Most widely used momentum indicator.',links:[{t:'Investopedia: RSI',u:'https://www.investopedia.com/terms/r/rsi.asp'}]},
+  {term:'SMA20 (20-day moving average)',tag:'ta',tl:'Technical',def:'Average closing price over 20 trading days. "vs SMA20" shows how far current price is below (negative) or above (positive) this average. Far below = stretched downward, tends to revert upward.',links:[{t:'Investopedia: SMA',u:'https://www.investopedia.com/terms/s/sma.asp'}]},
+  {term:'Volume spike',tag:'ta',tl:'Technical',def:'Recent 5-day average volume ÷ 20-day average. Spike of 2× means twice normal trading. High volume during a price drop often signals capitulation (panic selling), which can precede a bounce.',links:[{t:'Investopedia: Volume',u:'https://www.investopedia.com/terms/v/volume.asp'}]},
+  {term:'Liquidity score',tag:'ta',tl:'Technical',def:'How easily you can buy/sell without moving the price. Low-volume stocks have wide bid-ask spreads and erratic prices. Signals are less reliable in thin markets. This screener penalises stocks under 500K daily volume.',links:[{t:'Investopedia: Liquidity',u:'https://www.investopedia.com/terms/l/liquidity.asp'}]},
+  {term:'Bounce score',tag:'ta',tl:'Technical',def:'Composite 0–100: RSI (40pts max) + SMA20 deviation (30pts) + volume spike (20pts) + drop size (10pts). Score above 80 = strong oversold bounce signal. Not a price prediction — measures how stretched the stock is.',links:[]},
+  {term:'52-week low / Near bottom',tag:'ta',tl:'Technical',def:'The lowest price in the past 52 weeks. "Near bottom" bar: left side = price close to 52-week low (potential floor), right = far above it. Near the low means more of the selling may be over — but stocks can always fall further.',links:[{t:'Investopedia: 52-Week Low',u:'https://www.investopedia.com/terms/1/52wklow.asp'}]},
+  {term:'Hold duration estimate',tag:'ta',tl:'Technical',def:'Estimated days to hold based on how far RSI needs to recover to the sell threshold. Calculated as: (target RSI − current RSI) × base days factor. It is an estimate only — not a guarantee. Adjust the RSI sell target in Settings.',links:[]},
+  {term:'Sell signal',tag:'ta',tl:'Technical',def:'"Hold" = RSI below sell threshold and price not stretched above SMA20. "Consider selling" = RSI elevated or price 10%+ above SMA20. "Strong sell" = RSI very high or price 15%+ above SMA20. These are technical signals — combine with news.',links:[{t:'RSI sell signals',u:'https://www.investopedia.com/articles/active-trading/042114/overbought-or-oversold-use-relative-strength-index-find-out.asp'}]},
+  {term:'CommSec brokerage fees',tag:'risk',tl:'Risk',def:'ASX trades: $10 minimum, or 0.12% of trade value (whichever is greater). US trades: USD $19.95 or 0.31% (whichever is greater). Applied on both buy and sell. A $5,000 ASX trade costs $10 each way = $20 round-trip.',links:[{t:'CommSec fee schedule',u:'https://www.commsec.com.au/support/rates-and-fees.html'}]},
+  {term:'IPO (Initial Public Offering)',tag:'fund',tl:'Fundamental',def:'When a private company first sells shares to the public. Early investors can profit from price rises. Risk: many IPOs fall below listing price within 12 months. Lock-up expiry (when early investors can sell) often drops the price.',links:[{t:'ASX IPOs',u:'https://www2.asx.com.au/investors/investment-tools-and-resources/investment-options/shares/ipos'},{t:'Investopedia: IPO',u:'https://www.investopedia.com/terms/i/ipo.asp'}]},
+  {term:'P&L (Profit and Loss)',tag:'fund',tl:'Fundamental',def:'Unrealised P&L = (current price − buy price) × shares. Realised = same after selling. Net P&L = (sell proceeds − buy cost) − total brokerage. Always subtract brokerage from both sides to get your true return.',links:[]},
+  {term:'Stop loss',tag:'risk',tl:'Risk',def:'A pre-set exit price limiting your loss. E.g. buy at $10, stop loss at $8 = max 20% loss. Essential for biotech — failed trials can drop stocks 60–80% overnight. Never risk more than you can afford to lose entirely.',links:[{t:'Investopedia: Stop-Loss',u:'https://www.investopedia.com/terms/s/stop-lossorder.asp'}]},
+  {term:'Diversification',tag:'risk',tl:'Risk',def:'Never put more than 5% of your portfolio in one speculative stock. Limit total biotech to 20–30% of portfolio. Spread across sectors, markets, and asset types (ETFs, property, cash) to reduce risk.',links:[{t:'Investopedia: Diversification',u:'https://www.investopedia.com/terms/d/diversification.asp'}]},
+  {term:'Biotech & trading volume',tag:'fund',tl:'Fundamental',def:'Your instinct is correct: biotech stocks often have thin volume because fewer people understand the science. Even a technically strong stock may not move without a catalyst (trial result, FDA approval, partnership). Always check avg daily volume — low volume = low reliability of signals.',links:[{t:'ClinicalTrials.gov',u:'https://clinicaltrials.gov'},{t:'BioPharma Catalyst Calendar',u:'https://www.biopharmcatalyst.com'}]},
+  {term:'ASX vs NYSE/NASDAQ',tag:'fund',tl:'Fundamental',def:'ASX opens 10:00am–4:00pm AEST Mon–Fri. Stocks in AUD. Ticker ends in .AX (e.g. CSL.AX). NYSE/NASDAQ opens 9:30am–4:00pm ET = roughly 11:30pm–6:00am AEST next day. Stocks in USD.',links:[{t:'ASX',u:'https://www2.asx.com.au'},{t:'NASDAQ explained',u:'https://www.investopedia.com/terms/n/nasdaq.asp'}]},
+  {term:'Paper trading',tag:'risk',tl:'Risk',def:'Simulated trading with virtual money at real prices. Practice strategy before risking real capital. Important: treat it as real money or the lessons are meaningless. Studies show most new traders lose money in the first year — paper trading saves you that tuition fee.',links:[]},
+];
+function renderGloss(items){
+  const tc={ta:'t-ta',fund:'t-fund',risk:'t-risk'};
+  document.getElementById('glossItems').innerHTML=items.map(g=>`<div class="g-item"><div class="g-term">${g.term}<span class="g-tag ${tc[g.tag]||''}">${g.tl}</span></div><div class="g-def">${g.def}</div>${(g.links||[]).map(l=>`<a class="g-link" href="${l.u}" target="_blank">→ ${l.t}</a>`).join(' ')}</div>`).join('');
+}
+renderGloss(GLOSS);
+function filterGloss(q){renderGloss(q?GLOSS.filter(g=>g.term.toLowerCase().includes(q.toLowerCase())||g.def.toLowerCase().includes(q.toLowerCase())):GLOSS);}
+function toggleGlossary(){const p=document.getElementById('gPanel'),o=document.getElementById('gOverlay'),open=p.classList.contains('open');p.classList.toggle('open',!open);o.classList.toggle('open',!open);}
+
+// ════════════════════════════════════════════
+// TA CALCULATIONS
+// ════════════════════════════════════════════
+function calcRSI(c,p=14){
+  if(c.length<p+1)return 50;
+  let g=0,l=0;
+  for(let i=c.length-p;i<c.length;i++){const d=c[i]-c[i-1];if(d>0)g+=d;else l-=d;}
+  const ag=g/p,al=l/p;if(al===0)return 100;
+  return Math.round((100-100/(1+ag/al))*10)/10;
+}
+function calcSMA(c,p=20){const s=c.slice(-p);return s.reduce((a,b)=>a+b,0)/s.length;}
+
+function holdEstimate(rsi){
+  const target=S('hold_rsi_target');
+  const base=S('hold_days_base');
+  const max=S('hold_days_max');
+  if(rsi>=target)return 0;
+  const days=Math.round((target-rsi)*base);
+  return Math.min(days,max);
+}
+
+function analyse(closes,volumes){
+  const n=closes.length,cur=closes[n-1],mo=closes[Math.max(0,n-22)];
+  const drop=((cur-mo)/mo)*100;
+  const rsi=calcRSI(closes);
+  const sma20=calcSMA(closes,20);
+  const sma50=calcSMA(closes,Math.min(50,closes.length));
+  const pvs=((cur-sma20)/sma20)*100;
+  const rv=volumes.slice(-5).reduce((a,b)=>a+b,0)/5;
+  const av=volumes.slice(-20).reduce((a,b)=>a+b,0)/20;
+  const vs=av>0?rv/av:1;
+  const liqScore=Math.min(100,Math.round(Math.log10(Math.max(av,1))/7*100));
+  const low52=Math.min(...closes.slice(-Math.min(252,closes.length)));
+  const high52=Math.max(...closes.slice(-Math.min(252,closes.length)));
+  const range=high52-low52;
+  const botPct=range>0?((cur-low52)/range)*100:50;
+  // ── Improved scoring (v4.1) ──
+  let score=0;
+  const rsiOv=S('rsi_oversold'),smaBuy=S('sma_buy_pct'),volMin=S('vol_spike_min');
+  // RSI: extreme <20 is falling knife (25pts), recoverable 20-30 (35pts)
+  if(rsi<20)score+=25;else if(rsi<rsiOv)score+=35;else if(rsi<rsiOv+10)score+=20;else if(rsi<rsiOv+20)score+=10;
+  // SMA20 deviation
+  if(pvs<-20)score+=30;else if(pvs<-15)score+=22;else if(pvs<-10)score+=15;else if(pvs<-smaBuy)score+=7;
+  // Volume spike + drop confirmation (capitulation bonus)
+  if(vs>2.5)score+=20;else if(vs>2)score+=15;else if(vs>1.5)score+=10;else if(vs>volMin)score+=5;
+  if(vs>2&&drop<-10)score+=5; // confirmed capitulation bonus
+  // Drop magnitude (increased weight)
+  if(drop<-30)score+=12;else if(drop<-20)score+=10;else if(drop<-10)score+=6;else if(drop<-5)score+=3;
+  // Near-bottom bonus/penalty (dead cat bounce filter)
+  if(botPct<15)score+=10;else if(botPct<30)score+=5;else if(botPct>70)score-=10;
+  // SMA50 trend filter (hidden — reduces buying falling knives)
+  if(cur<sma50)score-=10;else score+=5;
+  score=Math.min(Math.max(score,0),100);
+  // Liquidity penalty
+  const liqLow=S('liq_penalty_low')*1000,liqMid=S('liq_penalty_mid')*1000;
+  if(av<liqLow)score=Math.round(score*0.6);
+  else if(av<liqMid*0.6)score=Math.round(score*0.8);
+  // Confidence = score - volatility proxy
+  const volatilityPenalty=Math.round(Math.min(20,Math.abs(drop)*0.3+vs*2));
+  const confidence=Math.max(0,score-Math.round(volatilityPenalty*0.3));
+  const confLabel=confidence>=70?'High':confidence>=50?'Medium':'Low';
+  const rsiOb=S('rsi_overbought'),rsiSS=S('rsi_strong_sell'),smaSell=S('sma_sell_pct');
+  let sellSig,sellCls;
+  if(rsi>rsiSS||pvs>smaSell+5){sellSig='Strong sell';sellCls='ss-s';}
+  else if(rsi>rsiOb||pvs>smaSell){sellSig='Consider selling';sellCls='ss-c';}
+  else{sellSig='Hold';sellCls='ss-h';}
+  const holdDays=holdEstimate(rsi);
+  return{cur,drop,rsi,sma20,sma50,pvs,vs,avgVol:av,liqScore,score,low52,high52,botPct,sellSig,sellCls,holdDays,confidence,confLabel};
+}
+
+// ════════════════════════════════════════════
+// FETCH — with timeout on ALL calls
+// ════════════════════════════════════════════
+function timeout(ms){return new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),ms));}
+
+async function fetchTicker(ticker){
+  const end=Math.floor(Date.now()/1000),start=end-400*24*3600;
+  const yUrl=`https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&period1=${start}&period2=${end}&includePrePost=false`;
+  const proxies=[`https://corsproxy.io/?${encodeURIComponent(yUrl)}`,`https://api.allorigins.win/raw?url=${encodeURIComponent(yUrl)}`];
+  for(const url of proxies){
+    try{
+      const r=await Promise.race([fetch(url),timeout(9000)]);
+      if(!r.ok)continue;
+      const txt=await Promise.race([r.text(),timeout(5000)]);
+      if(!txt||txt.length<200)continue;
+      const d=JSON.parse(txt);
+      const res=d?.chart?.result?.[0];if(!res)continue;
+      const q=res.indicators?.quote?.[0];if(!q)continue;
+      const pairs=(q.close||[]).map((c,i)=>({c,v:(q.volume||[])[i]||0})).filter(x=>x.c!=null&&x.c>0&&!isNaN(x.c));
+      if(pairs.length<22)continue;
+      return{closes:pairs.map(p=>p.c),volumes:pairs.map(p=>p.v)};
+    }catch(e){continue;}
+  }
+  return null;
+}
+async function fetchPrice(ticker){const d=await fetchTicker(ticker);return d?d.closes[d.closes.length-1]:null;}
+
+// AI reason — 4 second timeout, NEVER blocks table render
+async function fetchReason(ticker,name,drop){
+  try{
+    const body=JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:50,
+      system:'Financial analyst. 10 words max. Be specific.',
+      messages:[{role:'user',content:`Why did ${name} (${ticker}) drop ~${Math.abs(drop).toFixed(0)}% last month?`}]});
+    const r=await Promise.race([
+      fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body}),
+      timeout(6000)
+    ]);
+    if(!r.ok)return null;
+    const d=await Promise.race([r.json(),timeout(4000)]);
+    return d?.content?.[0]?.text?.trim()||null;
+  }catch(e){return null;}
+}
+
+// ════════════════════════════════════════════
+// BROKERAGE
+// ════════════════════════════════════════════
+function brok(value,isAU){
+  if(isAU)return Math.max(S('brok_au_min'),value*(S('brok_au_pct')/100));
+  return Math.max(S('brok_us_min'),value*(S('brok_us_pct')/100));
+}
+function fm(v){return(v<0?'-':'')+'$'+Math.abs(v).toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fmDT(d){return new Date(d).toLocaleString('en-AU',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});}
+
+// ════════════════════════════════════════════
+// SCREENER
+// ════════════════════════════════════════════
+let scRes=[],scSK='score',scSD=-1;
+function sortSc(k){if(scSK===k)scSD*=-1;else{scSK=k;scSD=k==='ticker'?1:-1;}renderScTable();}
+function pill(s){if(s>=75)return'<span class="pill pill-s">Strong</span>';if(s>=50)return'<span class="pill pill-m">Moderate</span>';return'<span class="pill pill-w">Weak</span>';}
+function barCol(s){return s>=75?'#639922':s>=50?'#BA7517':'#E24B4A';}
+function rsiCol(r){return r<S('rsi_oversold')?'#A32D2D':r<S('rsi_overbought')?'#854F0B':'#555';}
+function botHTML(bp,l52){
+  const col=bp<15?'#E24B4A':bp<30?'#BA7517':'#639922';
+  const lbl=bp<15?'Near bottom':bp<30?'Getting close':bp<50?'Midrange':'Far above low';
+  return`<div style="display:flex;align-items:center;gap:5px"><div class="bot-bar"><div class="bot-fill" style="width:${bp.toFixed(0)}%;background:${col}"></div></div><span style="font-size:11px;color:${col};white-space:nowrap">${lbl}</span></div><div style="font-size:10px;color:#aaa">52wk low $${l52.toFixed(2)}</div>`;
+}
+function liqHTML(liq,av){
+  const k=av>=1e6?(av/1e6).toFixed(1)+'M':(av/1000).toFixed(0)+'K';
+  const col=av<100000?'#A32D2D':av<500000?'#854F0B':'#3B6D11';
+  return`<div style="display:flex;align-items:center;gap:4px"><div style="width:50px;height:5px;background:#eee;border-radius:3px;overflow:hidden"><div style="height:100%;width:${liq}%;background:${col};border-radius:3px"></div></div><span style="font-size:11px;color:${col}">${k}/d</span></div>`;
+}
+function suggestShares(price,isAU,cash){
+  const pct=S('suggest_pct')/100;
+  const budget=Math.min(cash*pct,2000);
+  const fee=brok(budget,isAU);
+  const sh=Math.floor((budget-fee)/price);
+  return sh>0?sh:0;
+}
+function holdHTML(days){
+  if(days===0)return'<span class="hold-badge">At target</span>';
+  if(days<7)return`<span class="hold-badge" style="background:#FAEEDA;color:#633806">~${days}d (sell soon)</span>`;
+  return`<span class="hold-badge">~${days} days</span>`;
+}
+
+function renderScTable(){
+  const tbody=document.getElementById('scBody');
+  if(!scRes.length){tbody.innerHTML='';return;}
+  const isAU=currentMarket==='AU';
+  const pp=getPP();
+  const sorted=[...scRes].sort((a,b)=>{
+    const av=a[scSK],bv=b[scSK];
+    if(typeof av==='string')return scSD*(av<bv?-1:av>bv?1:0);
+    return scSD*(av-bv);
+  });
+  tbody.innerHTML=sorted.map(s=>{
+    const exB=isAU?'<span class="badge-au">ASX</span>':'<span class="badge-us">US</span>';
+    // reason: false = no API, null = loading, string = loaded
+    const rs=s.reason===null?'<span style="color:#bbb;font-size:11px">Loading…</span>':s.reason?`<span style="font-size:12px;color:#555;max-width:150px;display:block;line-height:1.4">${s.reason}</span>`:'<span class="muted" style="font-size:12px">—</span>';
+    const sug=suggestShares(s.cur,isAU,pp.cash);
+    return`<tr>
+      <td><a href="https://finance.yahoo.com/quote/${s.ticker}" target="_blank" class="tlink">${s.ticker}</a>${exB}<span class="cname">${s.name}</span></td>
+      <td class="muted">$${s.cur.toFixed(2)}</td>
+      <td class="red">${s.drop.toFixed(1)}%</td>
+      <td style="color:${rsiCol(s.rsi)};font-weight:500">${s.rsi}</td>
+      <td class="red">${s.pvs.toFixed(1)}%</td>
+      <td class="${s.vs>1.5?'green':s.vs>1.2?'amber':'muted'}">${s.vs.toFixed(2)}×</td>
+      <td>${liqHTML(s.liqScore,s.avgVol)}</td>
+      <td><span class="bw"><span class="bf" style="width:${s.score}%;background:${barCol(s.score)}"></span></span><span class="muted" style="font-size:11px;margin-right:4px">${s.score}</span>${pill(s.score)}<br><span style="font-size:10px;color:${s.confLabel==='High'?'#3B6D11':s.confLabel==='Medium'?'#854F0B':'#A32D2D'}">Conf: ${s.confLabel}</span></td>
+      <td>${botHTML(s.botPct,s.low52)}</td>
+      <td><span class="ss ${s.sellCls}">${s.sellSig}</span></td>
+      <td>${holdHTML(s.holdDays)}</td>
+      <td>${rs}</td>
+      <td>
+        <div style="display:flex;flex-direction:column;gap:3px">
+          <button class="btn btn-sm btn-green" onclick="quickPort('${s.ticker}','${s.name}',${s.cur},${isAU?1:0})">+ Portfolio</button>
+          <button class="btn btn-sm" onclick="quickPaper('${s.ticker}')">+ Paper</button>
+          ${sug>0?`<span class="suggest-box">~${sug} shares</span>`:''}
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function scSkeleton(n=6){
+  const tb=document.getElementById('scBody');tb.innerHTML='';
+  for(let i=0;i<n;i++){const tr=document.createElement('tr');tr.innerHTML=Array(13).fill('<td><span class="skel" style="width:65px;height:11px">&nbsp;</span></td>').join('');tb.appendChild(tr);}
+}
+
+async function runScan(){
+  const btn=document.getElementById('scanBtn');
+  const st=document.getElementById('ss');
+  document.getElementById('serr').innerHTML='';
+  document.getElementById('swarn').innerHTML='';
+  document.getElementById('scStats').style.display='none';
+  scRes=[];
+  const minDrop=parseInt(document.getElementById('dropSel').value);
+  const minVol=parseInt(document.getElementById('volSel').value)*1000;
+  const sKey=document.getElementById('sectorSel').value;
+  const sector=SECTORS[currentMarket][sKey];
+  if(!sector){return;}
+  const tickers=Object.keys(sector.tickers);
+  btn.disabled=true;
+  const prog=document.getElementById('sp'),fill=document.getElementById('spf');
+  prog.style.display='block';fill.style.width='0%';
+  scSkeleton();document.getElementById('scCard').style.display='block';
+  document.getElementById('scLeg').style.display='none';
+  const t0=Date.now();let done=0,failed=0;const results=[];
+
+  await Promise.all(tickers.map(async ticker=>{
+    const data=await fetchTicker(ticker);done++;
+    fill.style.width=Math.round(done/tickers.length*100)+'%';
+    st.textContent=`Fetching ${done}/${tickers.length}…`;
+    if(!data){failed++;return;}
+    const a=analyse(data.closes,data.volumes);
+    a.ticker=ticker;a.name=sector.tickers[ticker]||ticker;
+    a.reason=false; // false = no reason yet, renders as dash (not loading spinner)
+    if(a.drop<=-minDrop&&a.avgVol>=minVol)results.push(a);
+  }));
+
+  prog.style.display='none';
+  results.sort((a,b)=>b.score-a.score);
+  const top=results.slice(0,10);
+  const elapsed=((Date.now()-t0)/1000).toFixed(1)+'s';
+  document.getElementById('stL').textContent=tickers.length-failed;
+  document.getElementById('stM').textContent=results.length;
+  document.getElementById('stR').textContent=top.length?Math.round(top.reduce((a,s)=>a+s.rsi,0)/top.length):'—';
+  document.getElementById('stT').textContent=elapsed;
+  document.getElementById('scStats').style.display='grid';
+
+  if(failed===tickers.length){
+    document.getElementById('serr').innerHTML='<div class="err">Could not load any data — CORS proxy may be temporarily down. Wait a minute and try again.</div>';
+    btn.disabled=false;return;
+  }
+  if(failed>0)document.getElementById('swarn').innerHTML=`<div class="warn">${failed} tickers timed out.</div>`;
+
+  // *** RENDER TABLE IMMEDIATELY — before AI reasons ***
+  if(top.length===0){
+    document.getElementById('scBody').innerHTML=`<tr><td colspan="13"><div class="empty">No stocks matched. Try lowering the drop threshold or volume filter.<br>Current settings: drop &gt;${minDrop}%, volume &gt;${(minVol/1000).toFixed(0)}K/day</div></td></tr>`;
+  }else{
+    scRes=top;
+    renderScTable(); // render immediately with reason=false (shows dash)
+  }
+
+  const ts=new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'});
+  st.textContent=`Complete — ${top.length} candidates. ${ts}`;
+  document.getElementById('scCard').style.display='block';
+  document.getElementById('scLeg').style.display='flex';
+  btn.disabled=false; // *** RE-ENABLE BUTTON BEFORE AI fetch ***
+
+  // *** NOW fetch AI reasons independently — non-blocking ***
+  if(top.length>0){
+    st.textContent=`${top.length} candidates found. Loading AI drop reasons…`;
+    // Fire all reason fetches in parallel, update each cell as they come in
+    top.forEach(async s=>{
+      const reason=await fetchReason(s.ticker,s.name,s.drop);
+      s.reason=reason||false; // false = no reason available
+      // Update just that row's reason cell
+      const cells=document.querySelectorAll('#scBody tr');
+      cells.forEach(row=>{
+        if(row.cells[0]&&row.cells[0].textContent.includes(s.ticker)){
+          const reasonCell=row.cells[11];
+          if(reasonCell)reasonCell.innerHTML=s.reason?`<span style="font-size:12px;color:#555;max-width:150px;display:block;line-height:1.4">${s.reason}</span>`:'<span class="muted" style="font-size:12px">—</span>';
+        }
+      });
+    });
+    setTimeout(()=>{st.textContent=`Complete — ${top.length} candidates. ${ts}`;},7000);
+  }
+
+  // Feed simulation
+  feedSim(top);
+}
+
+function quickPort(ticker,name,price,isAU){
+  nav('portfolio');
+  document.getElementById('ptT').value=ticker;
+  document.getElementById('ptP').value=price.toFixed(2);
+  document.getElementById('ptD').value=new Date().toISOString().split('T')[0];
+  document.getElementById('ptSt').textContent=`Pre-filled: ${name} @ $${price.toFixed(2)}`;
+}
+function quickPaper(ticker){nav('paper');document.getElementById('ppT').value=ticker;}
+
+// ════════════════════════════════════════════
+// STOCK SEARCH
+// ════════════════════════════════════════════
+async function searchStock(){
+  const raw=document.getElementById('searchTicker').value.trim().toUpperCase();
+  if(!raw)return;
+  const st=document.getElementById('searchSt'),res=document.getElementById('searchRes');
+  st.textContent=`Fetching ${raw}…`;res.innerHTML='';
+  const data=await fetchTicker(raw);
+  if(!data){st.textContent='Could not load. Check ticker — use .AX suffix for ASX (e.g. CSL.AX).';return;}
+  const a=analyse(data.closes,data.volumes);
+  const isAU=raw.endsWith('.AX');
+  const pp=getPP();
+  const sug=suggestShares(a.cur,isAU,pp.cash);
+  st.textContent='';
+  res.innerHTML=`<div class="card"><div class="card-head"><h3>${raw} ${isAU?'<span class="badge-au">ASX</span>':'<span class="badge-us">US</span>'}</h3><a href="https://finance.yahoo.com/quote/${raw}" target="_blank" class="btn btn-sm">Yahoo Finance →</a></div>
+  <div class="card-body">
+    <div class="sg"><div class="stat"><div class="stat-lbl">Price</div><div class="stat-val">$${a.cur.toFixed(2)}</div></div>
+    <div class="stat"><div class="stat-lbl">1M change</div><div class="stat-val ${a.drop<0?'red':'green'}">${a.drop.toFixed(1)}%</div></div>
+    <div class="stat"><div class="stat-lbl">RSI</div><div class="stat-val" style="color:${rsiCol(a.rsi)}">${a.rsi}</div><div class="stat-sub">${a.rsi<S('rsi_oversold')?'Oversold':a.rsi>S('rsi_overbought')?'Overbought':'Neutral'}</div></div>
+    <div class="stat"><div class="stat-lbl">Score</div><div class="stat-val">${a.score}/100</div></div></div>
+    <div class="sg"><div class="stat"><div class="stat-lbl">vs SMA20</div><div class="stat-val ${a.pvs<0?'red':'green'}">${a.pvs.toFixed(1)}%</div></div>
+    <div class="stat"><div class="stat-lbl">Vol spike</div><div class="stat-val">${a.vs.toFixed(2)}×</div></div>
+    <div class="stat"><div class="stat-lbl">Avg vol/day</div><div class="stat-val" style="font-size:15px">${a.avgVol>=1e6?(a.avgVol/1e6).toFixed(1)+'M':(a.avgVol/1000).toFixed(0)+'K'}</div><div class="stat-sub">${a.avgVol<100000?'Very low liquidity':a.avgVol<500000?'Low liquidity':'Good liquidity'}</div></div>
+    <div class="stat"><div class="stat-lbl">52-wk range</div><div class="stat-val" style="font-size:14px">$${a.low52.toFixed(2)}–$${a.high52.toFixed(2)}</div></div></div>
+    <div style="margin-bottom:.9rem">${botHTML(a.botPct,a.low52)}</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:.5rem">
+      <span style="font-size:13px;font-weight:500">Sell signal:</span><span class="ss ${a.sellCls}">${a.sellSig}</span>
+      <span style="font-size:13px;font-weight:500;margin-left:10px">Hold est.:</span>${holdHTML(a.holdDays)}
+    </div>
+    ${sug>0?`<div class="suggest-box" style="margin-bottom:.9rem">Share suggestion: ~${sug} shares (${fm(sug*a.cur+brok(sug*a.cur,isAU))} incl. brokerage, based on ${S('suggest_pct')}% of paper cash)</div>`:''}
+    <div style="display:flex;gap:7px;flex-wrap:wrap">
+      <button class="btn btn-green" onclick="quickPort('${raw}','${raw}',${a.cur},${isAU?1:0})">+ Add to portfolio</button>
+      <button class="btn btn-sm btn-blue" onclick="quickPaper('${raw}')">+ Paper trade</button>
+    </div>
+  </div></div>`;
+}
+
+// ════════════════════════════════════════════
+// IPO
+// ════════════════════════════════════════════
+const IPOS=[
+  {ticker:'RDDT',name:'Reddit',date:'Mar 2024',price:34,ex:'NYSE',status:'Listed',note:'Social media. Listed $34, opened above $50.'},
+  {ticker:'ASLA',name:'Astera Labs',date:'Mar 2024',price:36,ex:'NASDAQ',status:'Listed',note:'AI data connectivity chips — strong performer.'},
+  {ticker:'TLX.AX',name:'Telix Pharma',date:'Nov 2017',price:0.65,ex:'ASX',status:'Listed',note:'Nuclear medicine. Strong long-term performer.'},
+  {ticker:'PRO.AX',name:'Pro Medicus',date:'Feb 2000',price:0.20,ex:'ASX',status:'Listed',note:'Medical imaging software. Exceptional long-term.'},
+  {ticker:'NEU.AX',name:'Neuren Pharma',date:'Oct 2004',price:0.20,ex:'ASX',status:'Listed',note:'Rare disease. Significant post-listing gains.'},
+  {ticker:'TBA',name:'Klarna',date:'2025 expected',price:null,ex:'NYSE',status:'Upcoming',note:'Buy-now-pay-later. ~$7B valuation.'},
+  {ticker:'TBA',name:'Chime',date:'2025 expected',price:null,ex:'NASDAQ',status:'Upcoming',note:'US neobank, 20M+ customers.'},
+  {ticker:'TBA',name:'Shein',date:'2024–25',price:null,ex:'London/US',status:'Upcoming',note:'Fast fashion. ~$60B valuation.'},
+];
+function renderIPO(){
+  document.getElementById('ipoBody').innerHTML=
+    `<div style="display:grid;grid-template-columns:80px 1fr 80px 70px;gap:10px;font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.05em;padding:0 0 8px;border-bottom:1px solid #e8e8e5;margin-bottom:4px"><div>Ticker</div><div>Company</div><div>Status</div><div>Price</div></div>`+
+    IPOS.map(i=>`<div style="display:grid;grid-template-columns:80px 1fr 80px 70px;gap:10px;padding:10px 0;border-bottom:1px solid #f0f0ec;font-size:13px;align-items:start">
+      <div><strong>${i.ticker}</strong><div style="font-size:10px;color:#888">${i.ex}</div></div>
+      <div><div style="font-weight:500">${i.name}</div><div style="font-size:12px;color:#555;margin-top:2px">${i.note}</div></div>
+      <div><span class="pill ${i.status==='Upcoming'?'pill-b':'pill-s'}">${i.status}</span><div style="font-size:10px;color:#888;margin-top:3px">${i.date}</div></div>
+      <div>${i.price?`<strong>$${i.price}</strong>`:'<span class="muted">TBA</span>'}</div>
+    </div>`).join('')+
+    `<div style="margin-top:.9rem;font-size:12px;color:#aaa">Live: <a href="https://www2.asx.com.au/investors/investment-tools-and-resources/investment-options/shares/ipos" target="_blank" style="color:#378ADD">ASX IPOs</a> · <a href="https://stockanalysis.com/ipos/" target="_blank" style="color:#378ADD">US IPOs</a></div>`;
+}
+
+// ════════════════════════════════════════════
+// PORTFOLIO
+// ════════════════════════════════════════════
+function getPF(){try{return JSON.parse(localStorage.getItem('pf')||'[]');}catch(e){return[];}}
+function savePF(p){localStorage.setItem('pf',JSON.stringify(p));}
+function checkNotifications(){
+  const arr=getPF();const notifyDays=S('notify_sell_days');let alerts=[];
+  arr.forEach(pos=>{
+    const dayHeld=Math.round((Date.now()-new Date(pos.buyDate))/(86400000));
+    const remainDays=(pos.holdTarget||30)-dayHeld;
+    if(remainDays<=notifyDays&&remainDays>=0)alerts.push(`${pos.ticker}: ~${remainDays} day${remainDays!==1?'s':''} to hold target`);
+    const pnl=((pos.curPrice-pos.buyPrice)/pos.buyPrice)*100;
+    if(pnl>=S('rsi_overbought'))alerts.push(`${pos.ticker}: up ${pnl.toFixed(0)}% — consider selling`);
+  });
+  const nb=document.getElementById('pfNotify');
+  if(alerts.length){nb.style.display='block';nb.innerHTML='<strong>Alerts:</strong> '+alerts.join(' · ');}
+  else nb.style.display='none';
+}
+function addPosition(){
+  const t=document.getElementById('ptT').value.trim().toUpperCase();
+  const s=parseFloat(document.getElementById('ptS').value);
+  const p=parseFloat(document.getElementById('ptP').value);
+  const d=document.getElementById('ptD').value;
+  if(!t||!s||!p||!d){alert('Fill all fields.');return;}
+  const isAU=t.endsWith('.AX');
+  const fee=brok(s*p,isAU);
+  const arr=getPF();
+  // Estimate hold based on a neutral RSI (50)
+  const holdTarget=holdEstimate(30)+5; // assume bought at oversold
+  arr.push({id:Date.now(),ticker:t,shares:s,buyPrice:p,brokerage:fee,buyDate:d,curPrice:p,isAU,holdTarget});
+  savePF(arr);renderPortfolio();
+  document.getElementById('ptSt').textContent=`Added ${s}×${t} @ $${p.toFixed(2)}. Brok: ${fm(fee)}.`;
+}
+async function refreshPortfolio(){const arr=getPF();for(const x of arr){const p=await fetchPrice(x.ticker);if(p)x.curPrice=p;}savePF(arr);renderPortfolio();}
+function closePos(id){
+  if(!confirm('Close position?'))return;
+  const arr=getPF(),pos=arr.find(x=>x.id===id);if(!pos)return;
+  const fee=brok(pos.shares*pos.curPrice,pos.isAU);
+  const h=getHist();
+  h.push({id:Date.now(),ticker:pos.ticker,shares:pos.shares,buyPrice:pos.buyPrice,sellPrice:pos.curPrice,buyBrok:pos.brokerage,sellBrok:fee,buyDate:pos.buyDate,sellDate:new Date().toISOString().split('T')[0]});
+  saveHist(h);savePF(arr.filter(x=>x.id!==id));renderPortfolio();renderHistory();
+}
+function renderPortfolio(){
+  const arr=getPF();checkNotifications();
+  const pfS=document.getElementById('pfStats'),pfC=document.getElementById('pfCard'),pfB=document.getElementById('pfBody');
+  pfC.style.display='block';
+  if(!arr.length){pfS.style.display='none';pfB.innerHTML='<tr><td colspan="11"><div class="empty">No positions yet.<br>Add above or use + Portfolio from the screener.</div></td></tr>';return;}
+  const inv=arr.reduce((a,x)=>a+x.shares*x.buyPrice+x.brokerage,0);
+  const val=arr.reduce((a,x)=>a+x.shares*x.curPrice,0);
+  const pnl=val-inv;
+  document.getElementById('pfInv').textContent=fm(inv);
+  document.getElementById('pfVal').textContent=fm(val);
+  const pe=document.getElementById('pfPnl');pe.textContent=(pnl>=0?'+':'')+fm(pnl);pe.className='stat-val '+(pnl>=0?'green':'red');
+  document.getElementById('pfCnt').textContent=arr.length;
+  pfS.style.display='grid';
+  pfB.innerHTML=arr.map(pos=>{
+    const pnl=((pos.curPrice-pos.buyPrice)/pos.buyPrice)*100;
+    const pv=(pos.curPrice-pos.buyPrice)*pos.shares;
+    const dayHeld=Math.round((Date.now()-new Date(pos.buyDate))/(86400000));
+    const holdTgt=pos.holdTarget||30;
+    const nearSell=holdTgt-dayHeld<=S('notify_sell_days');
+    let ss,sc;
+    if(pnl>S('rsi_strong_sell')-50||dayHeld>holdTgt+5){ss='Strong sell';sc='ss-s';}
+    else if(pnl>S('rsi_overbought')-50||dayHeld>=holdTgt-S('notify_sell_days')){ss='Consider selling';sc='ss-c';}
+    else{ss='Hold';sc='ss-h';}
+    return`<tr class="${nearSell?'near-sell':''}">
+      <td><a href="https://finance.yahoo.com/quote/${pos.ticker}" target="_blank" class="tlink">${pos.ticker}</a>${pos.isAU?'<span class="badge-au">ASX</span>':'<span class="badge-us">US</span>'}</td>
+      <td>${pos.shares}</td><td class="muted">$${pos.buyPrice.toFixed(2)}</td>
+      <td class="muted" style="font-size:11px">${fm(pos.brokerage)}</td>
+      <td class="muted">$${pos.curPrice.toFixed(2)}</td>
+      <td class="${pv>=0?'green':'red'}">${pv>=0?'+':''}${fm(Math.abs(pv))}</td>
+      <td class="${pnl>=0?'green':'red'}">${pnl>=0?'+':''}${pnl.toFixed(1)}%</td>
+      <td class="muted">${dayHeld}d</td>
+      <td>${holdHTML(Math.max(0,holdTgt-dayHeld))}</td>
+      <td><span class="ss ${sc}">${ss}</span></td>
+      <td><button class="btn btn-sm btn-red" onclick="closePos(${pos.id})">Close</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════
+// HISTORY
+// ════════════════════════════════════════════
+function getHist(){try{return JSON.parse(localStorage.getItem('hist')||'[]');}catch(e){return[];}}
+function saveHist(h){localStorage.setItem('hist',JSON.stringify(h));}
+function addHistory(){
+  const t=document.getElementById('htT').value.trim().toUpperCase(),s=parseFloat(document.getElementById('htS').value);
+  const b=parseFloat(document.getElementById('htB').value),sl=parseFloat(document.getElementById('htSl').value);
+  const bd=document.getElementById('htBD').value,sd=document.getElementById('htSD').value;
+  if(!t||!s||!b||!sl||!bd||!sd){alert('Fill all fields.');return;}
+  const isAU=t.endsWith('.AX');
+  const h=getHist();
+  h.push({id:Date.now(),ticker:t,shares:s,buyPrice:b,sellPrice:sl,buyBrok:brok(s*b,isAU),sellBrok:brok(s*sl,isAU),buyDate:bd,sellDate:sd});
+  saveHist(h);renderHistory();
+  ['htT','htS','htB','htSl','htBD','htSD'].forEach(id=>document.getElementById(id).value='');
+}
+function delHist(id){if(!confirm('Delete?'))return;saveHist(getHist().filter(x=>x.id!==id));renderHistory();}
+function renderHistory(){
+  const h=getHist();const htC=document.getElementById('htCard'),htB=document.getElementById('htBody');
+  htC.style.display='block';
+  if(!h.length){document.getElementById('htStats').style.display='none';htB.innerHTML='<tr><td colspan="10"><div class="empty">No history yet.</div></td></tr>';return;}
+  const wins=h.filter(x=>x.sellPrice>x.buyPrice).length;
+  const net=h.reduce((a,x)=>{const tot=(x.sellPrice-x.buyPrice)*x.shares-(x.buyBrok||0)-(x.sellBrok||0);return a+tot;},0);
+  document.getElementById('htTot').textContent=h.length;
+  document.getElementById('htW').textContent=wins;
+  const pp=document.getElementById('htP');pp.textContent=(net>=0?'+':'')+fm(net);pp.className='stat-val '+(net>=0?'green':'red');
+  document.getElementById('htR').textContent=Math.round(wins/h.length*100)+'%';
+  document.getElementById('htStats').style.display='grid';
+  htB.innerHTML=[...h].reverse().map(t=>{
+    const fee=(t.buyBrok||0)+(t.sellBrok||0);
+    const profit=(t.sellPrice-t.buyPrice)*t.shares-fee;
+    const ret=((t.sellPrice-t.buyPrice)/t.buyPrice)*100;
+    const days=Math.round((new Date(t.sellDate)-new Date(t.buyDate))/(86400000));
+    return`<tr><td><strong>${t.ticker}</strong></td><td>${t.shares}</td>
+      <td class="muted">$${t.buyPrice.toFixed(2)}</td><td class="muted">$${t.sellPrice.toFixed(2)}</td>
+      <td class="muted" style="font-size:11px">${fm(fee)}</td>
+      <td class="${profit>=0?'green':'red'}">${profit>=0?'+':''}${fm(Math.abs(profit))}</td>
+      <td class="${ret>=0?'green':'red'}">${ret>=0?'+':''}${ret.toFixed(1)}%</td>
+      <td class="muted">${days}d</td>
+      <td class="muted" style="font-size:11px">${t.buyDate}→${t.sellDate}</td>
+      <td><button class="btn btn-sm" onclick="delHist(${t.id})">×</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════
+// PAPER TRADING
+// ════════════════════════════════════════════
+function getPP(){try{return JSON.parse(localStorage.getItem('pp')||JSON.stringify({cash:S('paper_default_cash'),startCash:S('paper_default_cash'),positions:[],log:[]}));}catch(e){return{cash:S('paper_default_cash'),startCash:S('paper_default_cash'),positions:[],log:[]};}}
+function savePP(p){localStorage.setItem('pp',JSON.stringify(p));}
+function resetPaper(){if(!confirm('Reset paper trading?'))return;localStorage.removeItem('pp');renderPaper();}
+function setPaperCash(){
+  const v=parseFloat(document.getElementById('ppSC').value);
+  if(!v||v<100){alert('Enter a valid amount.');return;}
+  const pp=getPP();pp.startCash=v;pp.cash=v;savePP(pp);renderPaper();
+}
+async function paperTrade(){
+  const t=document.getElementById('ppT').value.trim().toUpperCase();
+  const s=parseFloat(document.getElementById('ppS').value);
+  const action=document.getElementById('ppA').value;
+  const st=document.getElementById('ppSt');
+  if(!t||!s||s<1){st.textContent='Enter ticker and shares.';return;}
+  st.textContent=`Fetching ${t} price…`;
+  const price=await fetchPrice(t);
+  if(!price){st.textContent='Could not fetch price. Check ticker.';return;}
+  const isAU=t.endsWith('.AX');
+  const pp=getPP();
+  const now=new Date().toISOString();
+  const fee=brok(price*s,isAU);
+  if(action==='buy'){
+    const cost=price*s+fee;
+    if(cost>pp.cash){st.textContent=`Not enough cash. Need ${fm(cost)}, have ${fm(pp.cash)}.`;return;}
+    pp.cash-=cost;
+    const ex=pp.positions.find(x=>x.ticker===t);
+    if(ex){const tot=ex.shares+s;ex.avgBuy=(ex.avgBuy*ex.shares+price*s)/tot;ex.shares=tot;ex.buyDate=ex.buyDate||now;}
+    else pp.positions.push({ticker:t,shares:s,avgBuy:price,curPrice:price,isAU,buyDate:now,holdTarget:holdEstimate(50)+5});
+    pp.log.push({dt:now,ticker:t,action:'BUY',shares:s,price,brok:fee,total:cost});
+    st.textContent=`Bought ${s}×${t} @ $${price.toFixed(2)}. Brok: ${fm(fee)}. Total: ${fm(cost)}.`;
+  }else{
+    const pos=pp.positions.find(x=>x.ticker===t);
+    if(!pos||pos.shares<s){st.textContent='Not enough shares.';return;}
+    const proceeds=price*s-fee;
+    pp.cash+=proceeds;pos.shares-=s;
+    if(pos.shares<=0)pp.positions=pp.positions.filter(x=>x.ticker!==t);
+    pp.log.push({dt:now,ticker:t,action:'SELL',shares:s,price,brok:fee,total:proceeds});
+    st.textContent=`Sold ${s}×${t} @ $${price.toFixed(2)}. Brok: ${fm(fee)}. Net: ${fm(proceeds)}.`;
+  }
+  savePP(pp);renderPaper();
+}
+async function refreshPaper(){const pp=getPP();for(const x of pp.positions){const p=await fetchPrice(x.ticker);if(p)x.curPrice=p;}savePP(pp);renderPaper();}
+async function qSellPaper(ticker,shares){document.getElementById('ppT').value=ticker;document.getElementById('ppS').value=shares;document.getElementById('ppA').value='sell';await paperTrade();}
+function renderPaper(){
+  const pp=getPP();
+  document.getElementById('ppSC').value=pp.startCash||S('paper_default_cash');
+  const portVal=pp.positions.reduce((a,x)=>a+x.shares*x.curPrice,0);
+  const total=pp.cash+portVal;
+  const pnl=total-(pp.startCash||S('paper_default_cash'));
+  const ret=pnl/(pp.startCash||S('paper_default_cash'))*100;
+  document.getElementById('ppCash').textContent=fm(pp.cash);
+  document.getElementById('ppPort').textContent=fm(portVal);
+  const pe=document.getElementById('ppPnl');pe.textContent=(pnl>=0?'+':'')+fm(pnl);pe.className='stat-val '+(pnl>=0?'green':'red');
+  const re=document.getElementById('ppRet');re.textContent=(ret>=0?'+':'')+ret.toFixed(1)+'%';re.className='stat-val '+(ret>=0?'green':'red');
+  const ppC=document.getElementById('ppCard'),ppL=document.getElementById('ppLogCard');
+  if(!pp.positions.length){ppC.style.display='none';}else{
+    ppC.style.display='block';
+    document.getElementById('ppBody').innerHTML=pp.positions.map(pos=>{
+      const pnl=((pos.curPrice-pos.avgBuy)/pos.avgBuy)*100;
+      const pv=(pos.curPrice-pos.avgBuy)*pos.shares;
+      const dayHeld=Math.round((Date.now()-new Date(pos.buyDate))/(86400000));
+      const holdTgt=pos.holdTarget||30;
+      let ss,sc;if(pnl>40||dayHeld>holdTgt+5){ss='Strong sell';sc='ss-s';}else if(pnl>20||dayHeld>=holdTgt){ss='Consider selling';sc='ss-c';}else{ss='Hold';sc='ss-h';}
+      const sug=suggestShares(pos.curPrice,pos.isAU,pp.cash);
+      return`<tr><td><strong>${pos.ticker}</strong></td><td>${pos.shares}</td>
+        <td class="muted">$${pos.avgBuy.toFixed(2)}</td><td class="muted">$${pos.curPrice.toFixed(2)}</td>
+        <td class="${pv>=0?'green':'red'}">${pv>=0?'+':''}${fm(Math.abs(pv))}</td>
+        <td class="${pnl>=0?'green':'red'}">${pnl>=0?'+':''}${pnl.toFixed(1)}%</td>
+        <td class="muted">${dayHeld}d</td>
+        <td>${holdHTML(Math.max(0,holdTgt-dayHeld))}</td>
+        <td><span class="ss ${sc}">${ss}</span></td>
+        <td>${sug>0?`<span class="suggest-box">+${sug} more</span>`:''}</td>
+        <td><button class="btn btn-sm btn-red" onclick="qSellPaper('${pos.ticker}',${pos.shares})">Sell all</button></td>
+      </tr>`;
+    }).join('');
+  }
+  if(!pp.log.length){ppL.style.display='none';}else{
+    ppL.style.display='block';
+    document.getElementById('ppLogBody').innerHTML=[...pp.log].reverse().slice(0,30).map(l=>`<tr>
+      <td style="font-size:11px">${fmDT(l.dt)}</td>
+      <td><strong>${l.ticker}</strong></td>
+      <td><span class="pill ${l.action==='BUY'?'pill-s':'pill-w'}">${l.action}</span></td>
+      <td>${l.shares}</td><td class="muted">$${l.price.toFixed(2)}</td>
+      <td class="muted">${fm(l.brok)}</td>
+      <td class="${l.action==='BUY'?'red':'green'}">${l.action==='BUY'?'-':'+'}${fm(Math.abs(l.total))}</td>
+    </tr>`).join('');
+  }
+}
+
+// ════════════════════════════════════════════
+// AUTO-SIMULATION
+// ════════════════════════════════════════════
+function getSim(){try{return JSON.parse(localStorage.getItem('sim')||JSON.stringify({startCash:10000,cash:10000,positions:[],history:[]}));}catch(e){return{startCash:10000,cash:10000,positions:[],history:[]};}}
+function saveSim(s){localStorage.setItem('sim',JSON.stringify(s));}
+function resetSim(){if(!confirm('Reset simulation?'))return;localStorage.removeItem('sim');renderSim();}
+
+function feedSim(stocks){
+  const sim=getSim();
+  const maxTrade=parseFloat(document.getElementById('simMT').value)||2000;
+  const threshold=parseFloat(document.getElementById('simThr').value)||80;
+  const sellMode=document.getElementById('simSell').value;
+  const pctTarget=parseFloat(document.getElementById('simPct').value)||20;
+  const now=new Date().toISOString().split('T')[0];
+  // Buy phase
+  stocks.forEach(s=>{
+    if(s.score<threshold)return;
+    if(sim.positions.find(p=>p.ticker===s.ticker))return;
+    const isAU=s.ticker.endsWith('.AX');
+    const fee=brok(maxTrade,isAU);
+    const shares=Math.floor((maxTrade-fee)/s.cur);
+    if(shares<1)return;
+    const cost=shares*s.cur+fee;
+    if(cost>sim.cash)return;
+    sim.cash-=cost;
+    sim.positions.push({ticker:s.ticker,name:s.name||s.ticker,shares,buyPrice:s.cur,curPrice:s.cur,buyDate:now,scoreAtBuy:s.score,isAU,holdDays:s.holdDays||30});
+  });
+  // Sell phase — check existing positions
+  const toSell=[];
+  sim.positions.forEach(pos=>{
+    const matchStock=stocks.find(s=>s.ticker===pos.ticker);
+    if(!matchStock)return;
+    pos.curPrice=matchStock.cur;
+    const pnlPct=((pos.curPrice-pos.buyPrice)/pos.buyPrice)*100;
+    let shouldSell=false;
+    if(sellMode==='any'&&matchStock.sellSig!=='Hold')shouldSell=true;
+    else if(sellMode==='strong'&&matchStock.sellSig==='Strong sell')shouldSell=true;
+    else if(sellMode==='pct'&&pnlPct>=pctTarget)shouldSell=true;
+    if(shouldSell)toSell.push({pos,sig:matchStock.sellSig,pnlPct});
+  });
+  toSell.forEach(({pos,sig})=>{
+    const isAU=pos.isAU;
+    const fee=brok(pos.shares*pos.curPrice,isAU);
+    const proceeds=pos.shares*pos.curPrice-fee;
+    sim.cash+=proceeds;
+    const buyFee=brok(pos.shares*pos.buyPrice,isAU);
+    const profit=proceeds-(pos.shares*pos.buyPrice+buyFee);
+    sim.history.push({ticker:pos.ticker,buyDate:pos.buyDate,sellDate:now,buyPrice:pos.buyPrice,sellPrice:pos.curPrice,shares:pos.shares,brok:fee+buyFee,profit,scoreAtBuy:pos.scoreAtBuy,trigger:sig});
+    sim.positions=sim.positions.filter(p=>p.ticker!==pos.ticker);
+  });
+  saveSim(sim);renderSim();
+}
+
+async function runSimScan(){
+  const sc=parseFloat(document.getElementById('simSC').value)||10000;
+  const sim=getSim();
+  if(!sim.positions.length&&!sim.history.length){sim.startCash=sc;sim.cash=sc;saveSim(sim);}
+  document.getElementById('simSt').textContent='Scanning for high-score stocks…';
+  await runScan();
+  document.getElementById('simSt').textContent='Scan complete. Simulation updated.';
+  nav('sim');
+}
+
+function renderSim(){
+  const sim=getSim();
+  const portVal=sim.positions.reduce((a,p)=>a+p.shares*p.curPrice,0);
+  const total=sim.cash+portVal;
+  const net=total-sim.startCash;
+  const wins=sim.history.filter(x=>x.profit>0).length;
+  document.getElementById('simS').textContent=fm(sim.startCash);
+  document.getElementById('simV').textContent=fm(total);
+  const ge=document.getElementById('simG');ge.textContent=(net>=0?'+':'')+fm(net);ge.className='stat-val '+(net>=0?'green':'red');
+  document.getElementById('simWR').textContent=sim.history.length?Math.round(wins/sim.history.length*100)+'%':'—';
+  document.getElementById('simStats').style.display='grid';
+  const sp=document.getElementById('simPosCard'),sh=document.getElementById('simHistCard');
+  if(!sim.positions.length){sp.style.display='none';}else{
+    sp.style.display='block';
+    document.getElementById('simPosBody').innerHTML=sim.positions.map(p=>{
+      const pnl=((p.curPrice-p.buyPrice)/p.buyPrice)*100;
+      const pv=(p.curPrice-p.buyPrice)*p.shares;
+      let ss,sc;if(pnl>40){ss='Strong sell';sc='ss-s';}else if(pnl>20){ss='Consider';sc='ss-c';}else{ss='Hold';sc='ss-h';}
+      return`<tr><td><strong>${p.ticker}</strong><span class="cname">${p.name}</span></td>
+        <td style="font-size:11px;color:#aaa">${p.buyDate}</td>
+        <td class="muted">$${p.buyPrice.toFixed(2)}</td><td class="muted">$${p.curPrice.toFixed(2)}</td>
+        <td class="${pv>=0?'green':'red'}">${pv>=0?'+':''}${fm(Math.abs(pv))}</td>
+        <td><span class="pill pill-s" style="font-size:10px">${p.scoreAtBuy}</span></td>
+        <td>${holdHTML(p.holdDays||30)}</td>
+        <td><span class="ss ${sc}">${ss}</span></td>
+      </tr>`;
+    }).join('');
+  }
+  if(!sim.history.length){sh.style.display='none';}else{
+    sh.style.display='block';
+    document.getElementById('simHistBody').innerHTML=[...sim.history].reverse().map(t=>`<tr>
+      <td><strong>${t.ticker}</strong></td>
+      <td style="font-size:11px">${t.buyDate}</td><td style="font-size:11px">${t.sellDate}</td>
+      <td class="muted">$${t.buyPrice.toFixed(2)}</td><td class="muted">$${t.sellPrice.toFixed(2)}</td>
+      <td class="muted" style="font-size:11px">${fm(t.brok)}</td>
+      <td class="${t.profit>=0?'green':'red'}">${t.profit>=0?'+':''}${fm(Math.abs(t.profit))}</td>
+      <td class="${t.profit>=0?'green':'red'}">${((t.sellPrice-t.buyPrice)/t.buyPrice*100).toFixed(1)}%</td>
+      <td style="font-size:11px;color:#888">${t.trigger||'signal'}</td>
+    </tr>`).join('');
+  }
+}
+
+// ════════════════════════════════════════════
+// EXPORT / IMPORT
+// ════════════════════════════════════════════
+function exportData(){
+  const data={version:'v4',exported:new Date().toISOString(),settings:getSettings(),portfolio:getPF(),history:getHist(),paper:getPP(),simulation:getSim()};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`stock-hub-${new Date().toISOString().split('T')[0]}.json`;a.click();
+}
+function importData(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const d=JSON.parse(e.target.result);
+      if(d.portfolio)localStorage.setItem('pf',JSON.stringify(d.portfolio));
+      if(d.history)localStorage.setItem('hist',JSON.stringify(d.history));
+      if(d.paper)localStorage.setItem('pp',JSON.stringify(d.paper));
+      if(d.simulation)localStorage.setItem('sim',JSON.stringify(d.simulation));
+      if(d.settings)localStorage.setItem('settings',JSON.stringify(d.settings));
+      alert('Data imported! Portfolio, history, paper trades, simulation, and settings restored.');
+      renderPortfolio();renderHistory();renderPaper();renderSim();renderSettings();
+    }catch(err){alert('Invalid file.');}
+  };
+  reader.readAsText(file);input.value='';
+}
+
+// ════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════
+switchMarket('AU');
+document.getElementById('ptD').value=new Date().toISOString().split('T')[0];
+document.getElementById('htBD').value=new Date().toISOString().split('T')[0];
+document.getElementById('htSD').value=new Date().toISOString().split('T')[0];
+renderIPO();
+
+// ════════════════════════════════════════════
+// HELP SYSTEM
+// ════════════════════════════════════════════
+const HELP_CONTENT = {
+  screener: {
+    title: 'How to use the screener',
+    body: `<p><strong>What it does:</strong> Scans a list of stocks and finds those with the best bounce potential — stocks that have dropped significantly and show technical signs of reversing upward.</p>
+    <p style="margin-top:.8rem"><strong>Step by step:</strong></p>
+    <ol style="padding-left:1.2rem;margin-top:.4rem;line-height:2">
+      <li>Select your sector (start with <em>Biotech/Pharma</em> since that's your expertise)</li>
+      <li>Set minimum drop — 10% is a good starting point</li>
+      <li>Set minimum volume — 500K/day filters out illiquid stocks that won't move</li>
+      <li>Press <strong>Scan now</strong> — takes 10–30 seconds to load live data</li>
+      <li>Results appear immediately with all signals. AI drop reasons load separately in the background</li>
+    </ol>
+    <p style="margin-top:.8rem"><strong>What each column means:</strong></p>
+    <ul style="padding-left:1.2rem;margin-top:.4rem;line-height:2">
+      <li><strong>1M drop:</strong> How much the stock fell in the past month</li>
+      <li><strong>RSI:</strong> 0–100. Below 30 = oversold. Below 20 = extreme (may be falling knife)</li>
+      <li><strong>vs SMA20:</strong> How far below the 20-day average. More negative = more stretched</li>
+      <li><strong>Vol spike:</strong> Recent volume ÷ 20-day average. Above 1.5× = unusual activity</li>
+      <li><strong>Liquidity:</strong> Average daily shares traded. Low liquidity = signals unreliable</li>
+      <li><strong>Score:</strong> Composite 0–100. Confidence = score adjusted for volatility</li>
+      <li><strong>Near bottom:</strong> Bar left = close to 52-week low (potential floor)</li>
+      <li><strong>Sell signal:</strong> Technical indicator of when to exit</li>
+      <li><strong>Hold est.:</strong> Estimated days to hold before sell signal triggers</li>
+      <li><strong>Actions → Shares suggestion:</strong> Recommended number of shares based on 10% of your paper cash</li>
+    </ul>
+    <p style="margin-top:.8rem"><strong>Important:</strong> Never act on screener results alone. Always check why the stock dropped (news, trial failure, earnings miss) before buying.</p>`
+  },
+  search: {
+    title: 'How to use stock search',
+    body: `<p><strong>What it does:</strong> Analyses any individual stock you type in — gives you the full technical picture for a specific company.</p>
+    <p style="margin-top:.8rem"><strong>How to enter tickers:</strong></p>
+    <ul style="padding-left:1.2rem;margin-top:.4rem;line-height:2">
+      <li>ASX stocks: add <strong>.AX</strong> suffix → e.g. <code>CSL.AX</code>, <code>BHP.AX</code>, <code>TLX.AX</code></li>
+      <li>US stocks: just the ticker → e.g. <code>MRNA</code>, <code>NVDA</code>, <code>TSLA</code></li>
+    </ul>
+    <p style="margin-top:.8rem"><strong>Share quantity suggestion:</strong> Shows how many shares to buy based on ${S('suggest_pct')}% of your paper trading cash (adjustable in Settings). It deducts CommSec brokerage from the calculation so you don't overspend.</p>
+    <p style="margin-top:.8rem"><strong>+ Add to portfolio</strong> button pre-fills the portfolio page with ticker and price — you just need to confirm shares and date.</p>
+    <p style="margin-top:.8rem"><strong>+ Paper trade</strong> sends the ticker to the paper trading page so you can simulate buying it.</p>`
+  },
+  portfolio: {
+    title: 'How to use My portfolio',
+    body: `<p><strong>What it does:</strong> Tracks your real money stock positions with CommSec brokerage automatically deducted.</p>
+    <p style="margin-top:.8rem"><strong>Adding a position:</strong></p>
+    <ol style="padding-left:1.2rem;margin-top:.4rem;line-height:2">
+      <li>Enter ticker (with .AX for ASX), number of shares, your buy price, and date</li>
+      <li>CommSec brokerage is calculated automatically ($10 or 0.12% for ASX, whichever is greater)</li>
+      <li>Press Add — the position appears in your portfolio table</li>
+    </ol>
+    <p style="margin-top:.8rem"><strong>Columns explained:</strong></p>
+    <ul style="padding-left:1.2rem;margin-top:.4rem;line-height:2">
+      <li><strong>Brok.:</strong> CommSec brokerage paid on the buy</li>
+      <li><strong>P&L $:</strong> Current profit/loss in dollars (not including sell brokerage yet)</li>
+      <li><strong>Days held:</strong> How long you have owned it</li>
+      <li><strong>Hold target:</strong> Estimated days remaining before the sell signal is expected to trigger</li>
+      <li><strong>Sell signal:</strong> Technical indicator — Hold / Consider selling / Strong sell</li>
+    </ul>
+    <p style="margin-top:.8rem"><strong>Alerts (amber banner at top):</strong> Shown when a position is approaching its hold target or when P&L is very high.</p>
+    <p style="margin-top:.8rem"><strong>Closing a position:</strong> Click Close — it moves to Trade History automatically with brokerage on the sell side calculated.</p>
+    <p style="margin-top:.8rem"><strong>Refresh prices:</strong> Fetches latest prices from Yahoo Finance for all positions.</p>`
+  },
+  paper: {
+    title: 'How to use paper trading',
+    body: `<p><strong>What it does:</strong> Lets you practice buying and selling stocks with virtual money at real market prices. No real money at risk.</p>
+    <p style="margin-top:.8rem"><strong>Setting up:</strong></p>
+    <ul style="padding-left:1.2rem;margin-top:.4rem;line-height:2">
+      <li>Default starting cash: $10,000 (adjustable in the account settings at top)</li>
+      <li>To change your starting cash: enter amount → press Set → it resets your account</li>
+    </ul>
+    <p style="margin-top:.8rem"><strong>Placing a trade:</strong></p>
+    <ol style="padding-left:1.2rem;margin-top:.4rem;line-height:2">
+      <li>Enter a ticker (e.g. <code>CSL.AX</code> or <code>MRNA</code>)</li>
+      <li>Enter number of shares</li>
+      <li>Select Buy or Sell</li>
+      <li>Press Execute — it fetches the live price and executes</li>
+      <li>CommSec brokerage is deducted from both buys and sells</li>
+    </ol>
+    <p style="margin-top:.8rem"><strong>Share suggestion:</strong> Shown in the position table under each holding — suggests how many additional shares you could buy with remaining cash at 10% of cash per trade.</p>
+    <p style="margin-top:.8rem"><strong>Hold target:</strong> Estimated days to hold. When it shows "sell soon", consider reviewing the position.</p>
+    <p style="margin-top:.8rem"><strong>Trade log:</strong> Every trade is recorded with exact date and time — review your decision-making over time.</p>
+    <p style="margin-top:.8rem"><strong>Why paper trade first?</strong> Studies show most new traders lose money in their first year. Paper trading lets you experience the emotional ups and downs — and make mistakes — without real financial consequences.</p>`
+  },
+  sim: {
+    title: 'How auto-simulation works',
+    body: `<p><strong>What it does:</strong> Automatically applies a buy/sell strategy to real data and shows you what would have happened. You don't need to do anything daily — just run a scan and the simulation updates.</p>
+    <p style="margin-top:.8rem"><strong>Do you need to click every day?</strong> No. The simulation runs based on the stocks found in the current scan. When you press "Scan &amp; simulate", it:</p>
+    <ol style="padding-left:1.2rem;margin-top:.4rem;line-height:2">
+      <li>Scans all stocks in the selected sector</li>
+      <li><strong>Buys</strong> any stock with score above your threshold (e.g. 80) — up to 3 new positions, max 5 total</li>
+      <li><strong>Sells</strong> any existing position where the sell condition is triggered (RSI high, target % hit, or score deterioration)</li>
+      <li>Deducts CommSec brokerage on both sides</li>
+      <li>Records all trades in simulation history</li>
+    </ol>
+    <p style="margin-top:.8rem"><strong>Strategy slots A / B / C:</strong> Run three different strategies independently. For example: Strategy A = aggressive (score &gt;70), Strategy B = conservative (score &gt;85), Strategy C = P&L target at 20%. Compare their performance over time.</p>
+    <p style="margin-top:.8rem"><strong>Sell triggers:</strong></p>
+    <ul style="padding-left:1.2rem;margin-top:.4rem;line-height:2">
+      <li><strong>Any sell signal:</strong> Sells when RSI or price suggests exiting</li>
+      <li><strong>Strong sell only:</strong> More patient — only exits on strong technical signals</li>
+      <li><strong>P&L % target:</strong> Sells when position reaches your target profit % (e.g. 20%)</li>
+      <li><strong>Failure detection:</strong> Sells if current score is 20+ points below the score when you bought — cutting losers early</li>
+    </ul>
+    <p style="margin-top:.8rem"><strong>Win rate:</strong> Shows what % of simulated trades were profitable. A rate above 55% suggests the strategy has real edge.</p>`
+  },
+};
+
+function showHelp(page){
+  const h=HELP_CONTENT[page];if(!h)return;
+  document.getElementById('helpTitle').textContent=h.title;
+  document.getElementById('helpBody').innerHTML=h.body;
+  const panel=document.getElementById('helpPanel'),overlay=document.getElementById('helpOverlay');
+  panel.style.display='flex';overlay.style.display='block';
+  setTimeout(()=>{panel.style.transform='translate(-50%,-50%) scale(1)';panel.style.transition='transform .2s';},10);
+}
+function closeHelp(){
+  document.getElementById('helpPanel').style.display='none';
+  document.getElementById('helpOverlay').style.display='none';
+}
+
+// ════════════════════════════════════════════
+// NEWS PAGE
+// ════════════════════════════════════════════
+async function loadNews(){
+  const mkt=document.getElementById('newsMkt').value;
+  const st=document.getElementById('newsSt');
+  const body=document.getElementById('newsBody');
+  st.textContent='Generating news summary via AI…';
+  body.innerHTML='';
+
+  const mktLabel={'AU':'Australian (ASX)','US':'US','global':'global'}[mkt]||mkt;
+  const prompt=`You are a financial news analyst. Generate a concise market news summary for ${mktLabel} markets as of today.
+
+Return ONLY a JSON array of 6-8 news items. Each item must have:
+- "headline": short news headline (max 12 words)
+- "summary": 2-sentence plain English explanation
+- "sectors": array of affected sectors from: ["Biotech","Mining","Technology","Finance","Energy","Healthcare","Retail","Property","All markets"]
+- "impact": either "positive" or "negative"
+- "strength": "high", "medium", or "low"
+
+Return ONLY raw JSON, no markdown, no explanation.`;
+
+  try{
+    const r=await Promise.race([
+      fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:1200,
+          messages:[{role:'user',content:prompt}]})}),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),15000))
+    ]);
+    if(!r.ok)throw new Error('API error');
+    const d=await r.json();
+    let txt=d?.content?.[0]?.text?.trim()||'';
+    txt=txt.replace(/```json|```/g,'').trim();
+    const idx=txt.indexOf('[');if(idx>0)txt=txt.slice(idx);
+    const items=JSON.parse(txt);
+    renderNews(items,mktLabel);
+    st.textContent=`${items.length} news items loaded. AI-generated — verify with live sources.`;
+  }catch(e){
+    st.textContent='Could not load AI news. Check your connection.';
+    body.innerHTML=`<div class="err">AI news requires a working connection to the Anthropic API. This may not be available from a static hosted page. Try using the app through Claude.ai directly, or check <a href="https://finance.yahoo.com/news" target="_blank" style="color:#A32D2D">Yahoo Finance News</a> and <a href="https://www.afr.com" target="_blank" style="color:#A32D2D">AFR</a> for live news.</div>
+    <div class="info"><strong>Live news sources for ASX:</strong><br>
+    <a href="https://www2.asx.com.au/markets/news-and-research" target="_blank" style="color:#0C447C">ASX announcements →</a> &nbsp;
+    <a href="https://www.afr.com/markets" target="_blank" style="color:#0C447C">AFR Markets →</a> &nbsp;
+    <a href="https://finance.yahoo.com/quote/%5EAXJO/news" target="_blank" style="color:#0C447C">Yahoo ASX news →</a><br>
+    <strong style="margin-top:.5rem;display:block">Live news for US:</strong>
+    <a href="https://finance.yahoo.com/news" target="_blank" style="color:#0C447C">Yahoo Finance →</a> &nbsp;
+    <a href="https://www.bloomberg.com/markets" target="_blank" style="color:#0C447C">Bloomberg →</a> &nbsp;
+    <a href="https://www.reuters.com/business/finance" target="_blank" style="color:#0C447C">Reuters →</a>
+    </div>`;
+  }
+}
+
+function renderNews(items,mktLabel){
+  const body=document.getElementById('newsBody');
+  body.innerHTML=`<div style="font-size:11px;color:#aaa;margin-bottom:.8rem">AI-generated summary for ${mktLabel} markets. Always verify with live sources before acting.</div>`+
+  items.map(item=>{
+    const isPos=item.impact==='positive';
+    const strengthCol=item.strength==='high'?'#A32D2D':item.strength==='medium'?'#854F0B':'#3B6D11';
+    const sectors=(item.sectors||[]).map(s=>`<span style="background:#f0f0ec;border-radius:4px;padding:1px 6px;font-size:11px;margin-right:3px">${s}</span>`).join('');
+    return`<div style="background:#fff;border:1px solid #e8e8e5;border-left:3px solid ${isPos?'#639922':'#E24B4A'};border-radius:0 10px 10px 0;padding:.9rem 1.1rem;margin-bottom:.7rem">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:.4rem">
+        <div style="font-size:14px;font-weight:500">${item.headline}</div>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+          <span style="font-size:11px;font-weight:500;padding:2px 7px;border-radius:8px;background:${isPos?'#EAF3DE':'#FCEBEB'};color:${isPos?'#27500A':'#791F1F'}">${isPos?'▲ Positive':'▼ Negative'}</span>
+          <span style="font-size:11px;color:${strengthCol};font-weight:500">${item.strength} impact</span>
+        </div>
+      </div>
+      <div style="font-size:13px;color:#555;margin-bottom:.5rem;line-height:1.6">${item.summary}</div>
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span style="font-size:11px;color:#888">Sectors affected:</span>${sectors}</div>
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════
+// MULTI-STRATEGY SIMULATION
+// ════════════════════════════════════════════
+let currentSimSlot=0;
+const SIM_KEYS=['sim','sim_b','sim_c'];
+const SIM_LABELS=['Strategy A','Strategy B','Strategy C'];
+
+function selectSimSlot(slot){
+  currentSimSlot=slot;
+  [0,1,2].forEach(i=>{
+    const btn=document.getElementById('simSlot'+i);
+    if(btn)btn.style.background=i===slot?'#1a1a1a':'';
+    if(btn)btn.style.color=i===slot?'#fff':'';
+    if(btn)btn.style.borderColor=i===slot?'#1a1a1a':'#ddd';
+  });
+  renderSim();
+}
+
+function getSimBySlot(slot){
+  const key=SIM_KEYS[slot||0];
+  try{return JSON.parse(localStorage.getItem(key)||JSON.stringify({startCash:10000,cash:10000,positions:[],history:[],label:SIM_LABELS[slot||0]}));}
+  catch(e){return{startCash:10000,cash:10000,positions:[],history:[],label:SIM_LABELS[slot||0]};}
+}
+function saveSimBySlot(slot,data){localStorage.setItem(SIM_KEYS[slot||0],JSON.stringify(data));}
+
+// Override getSim/saveSim to use slot
+function getSim(){return getSimBySlot(currentSimSlot);}
+function saveSim(s){saveSimBySlot(currentSimSlot,s);}
+
+function resetSim(){
+  if(!confirm('Reset this strategy slot?'))return;
+  localStorage.removeItem(SIM_KEYS[currentSimSlot]);
+  renderSim();
+}
+
+function showSimComparison(){
+  const slots=[0,1,2].map(i=>{
+    const s=getSimBySlot(i);
+    const portVal=s.positions.reduce((a,p)=>a+p.shares*(p.curPrice||p.buyPrice),0);
+    const total=s.cash+portVal;
+    const net=total-s.startCash;
+    const wins=s.history.filter(x=>x.profit>0).length;
+    const wr=s.history.length?Math.round(wins/s.history.length*100):0;
+    return{label:SIM_LABELS[i],net,total,trades:s.history.length,wr};
+  });
+  showHelp('_comparison');
+  document.getElementById('helpTitle').textContent='Strategy comparison';
+  document.getElementById('helpBody').innerHTML=`
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead><tr style="border-bottom:1px solid #e8e8e5">
+        <th style="padding:8px 10px;text-align:left;font-weight:500;color:#888;font-size:11px;text-transform:uppercase">Strategy</th>
+        <th style="padding:8px 10px;text-align:right;font-weight:500;color:#888;font-size:11px;text-transform:uppercase">Current value</th>
+        <th style="padding:8px 10px;text-align:right;font-weight:500;color:#888;font-size:11px;text-transform:uppercase">Net gain/loss</th>
+        <th style="padding:8px 10px;text-align:right;font-weight:500;color:#888;font-size:11px;text-transform:uppercase">Trades</th>
+        <th style="padding:8px 10px;text-align:right;font-weight:500;color:#888;font-size:11px;text-transform:uppercase">Win rate</th>
+      </tr></thead>
+      <tbody>${slots.map(s=>`<tr style="border-bottom:1px solid #f0f0ec">
+        <td style="padding:10px">${s.label}</td>
+        <td style="padding:10px;text-align:right">${fm(s.total)}</td>
+        <td style="padding:10px;text-align:right;font-weight:500" class="${s.net>=0?'green':'red'}">${s.net>=0?'+':''}${fm(s.net)}</td>
+        <td style="padding:10px;text-align:right;color:#888">${s.trades}</td>
+        <td style="padding:10px;text-align:right;color:#888">${s.wr}%</td>
+      </tr>`).join('')}</tbody>
+    </table>
+    <p style="margin-top:1rem;font-size:12px;color:#888">Configure each strategy independently using the A/B/C slot buttons, then run scans to build up their history.</p>`;
+}
+
+// Override feedSim to use improved logic with position limits
+const _origFeedSim = feedSim;
+function feedSim(stocks){
+  const sim=getSim();
+  const maxTrade=parseFloat(document.getElementById('simMT').value)||2000;
+  const threshold=parseFloat(document.getElementById('simThr').value)||80;
+  const sellMode=document.getElementById('simSell').value;
+  const pctTarget=parseFloat(document.getElementById('simPct').value)||20;
+  const now=new Date().toISOString().split('T')[0];
+  const MAX_NEW=3, MAX_TOTAL=5;
+  let newPositions=0;
+
+  // Sell phase first — check failure detection + normal signals
+  const toSell=[];
+  sim.positions.forEach(pos=>{
+    const match=stocks.find(s=>s.ticker===pos.ticker);
+    if(!match)return;
+    pos.curPrice=match.cur;
+    const pnlPct=((pos.curPrice-pos.buyPrice)/pos.buyPrice)*100;
+    const scoreDrop=pos.scoreAtBuy-(match.score||0);
+    let shouldSell=false;
+    if(scoreDrop>=20)shouldSell=true; // failure detection
+    else if(sellMode==='any'&&match.sellSig!=='Hold')shouldSell=true;
+    else if(sellMode==='strong'&&match.sellSig==='Strong sell')shouldSell=true;
+    else if(sellMode==='pct'&&pnlPct>=pctTarget)shouldSell=true;
+    if(shouldSell)toSell.push({pos,sig:scoreDrop>=20?'Failure detection':match.sellSig,pnlPct});
+  });
+  toSell.forEach(({pos,sig})=>{
+    const fee=brok(pos.shares*pos.curPrice,pos.isAU);
+    const proceeds=pos.shares*pos.curPrice-fee;
+    const buyFee=brok(pos.shares*pos.buyPrice,pos.isAU);
+    const profit=proceeds-(pos.shares*pos.buyPrice+buyFee);
+    sim.cash+=proceeds;
+    sim.history.push({ticker:pos.ticker,buyDate:pos.buyDate,sellDate:now,buyPrice:pos.buyPrice,sellPrice:pos.curPrice,shares:pos.shares,brok:fee+buyFee,profit,scoreAtBuy:pos.scoreAtBuy,trigger:sig});
+    sim.positions=sim.positions.filter(p=>p.ticker!==pos.ticker);
+  });
+
+  // Buy phase — max 3 new, max 5 total, sorted by score desc
+  const sorted=[...stocks].filter(s=>s.score>=threshold).sort((a,b)=>b.score-a.score);
+  for(const s of sorted){
+    if(sim.positions.length>=MAX_TOTAL)break;
+    if(newPositions>=MAX_NEW)break;
+    if(sim.positions.find(p=>p.ticker===s.ticker))continue;
+    const isAU=s.ticker.endsWith('.AX');
+    const fee=brok(maxTrade,isAU);
+    const shares=Math.floor((maxTrade-fee)/s.cur);
+    if(shares<1)continue;
+    const cost=shares*s.cur+fee;
+    if(cost>sim.cash)continue;
+    sim.cash-=cost;
+    sim.positions.push({ticker:s.ticker,name:s.name||s.ticker,shares,buyPrice:s.cur,curPrice:s.cur,buyDate:now,scoreAtBuy:s.score,isAU,holdDays:s.holdDays||30});
+    newPositions++;
+  }
+  saveSim(sim);renderSim();
+}
+
+// ════════════════════════════════════════════
+// PAPER TRADE — add share suggestion on load
+// ════════════════════════════════════════════
+// Patch: show share suggestion when ticker filled in paper page
+document.getElementById('ppT').addEventListener('input', function(){
+  const t=this.value.trim().toUpperCase();
+  if(t.length<2)return;
+  const pp=getPP();
+  const isAU=t.endsWith('.AX');
+  const pct=S('suggest_pct')/100;
+  const budget=Math.min(pp.cash*pct,2000);
+  // Can't suggest exact shares without price, show budget
+  const sugEl=document.getElementById('ppSuggest');
+  if(sugEl)sugEl.textContent=`Budget for this trade: ~${fm(budget)} (${S('suggest_pct')}% of cash)`;
+});
+
+// ════════════════════════════════════════════
+// SETTINGS: add suggest_pct to paper page
+// ════════════════════════════════════════════
+// Add budget display to paper trading form
+(function(){
+  const fr=document.querySelector('#page-paper .fr');
+  if(fr&&!document.getElementById('ppSuggest')){
+    const d=document.createElement('div');
+    d.style.cssText='font-size:12px;color:#555;align-self:flex-end;padding-bottom:7px';
+    d.id='ppSuggest';
+    d.textContent='Enter ticker to see budget suggestion';
+    fr.appendChild(d);
+  }
+})();
+
+// ════════════════════════════════════════════
+// NAV: add news to routing
+// ════════════════════════════════════════════
+const _origNav=nav;
+function nav(id){
+  _origNav(id);
+  if(id==='news'){
+    document.querySelectorAll('.nav-item').forEach(n=>{
+      if((n.getAttribute('onclick')||'').includes("'news'"))n.classList.add('active');
+    });
+  }
+}
+
+</script>
+</body>
+</html>
