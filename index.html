@@ -3,144 +3,117 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Stock Research Hub — Version Select</title>
+<title>Stock Research Hub — All Versions</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f7f7f5;color:#1a1a1a;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem}
-.container{max-width:680px;width:100%}
-h1{font-size:24px;font-weight:500;margin-bottom:6px}
-.sub{font-size:14px;color:#888;margin-bottom:2rem}
-.versions{display:grid;gap:12px}
-.ver-card{background:#fff;border:1px solid #e8e8e5;border-radius:12px;padding:1.1rem 1.4rem;display:flex;align-items:center;justify-content:space-between;gap:16px;transition:border-color 0.15s}
-.ver-card:hover{border-color:#378ADD}
-.ver-card.latest{border:2px solid #378ADD}
-.ver-left{display:flex;align-items:center;gap:14px}
-.ver-num{font-size:22px;font-weight:600;color:#1a1a1a;min-width:36px}
-.ver-info h3{font-size:14px;font-weight:500;margin-bottom:3px}
-.ver-info p{font-size:12px;color:#888;line-height:1.5}
-.ver-badge{display:inline-block;font-size:10px;font-weight:500;padding:2px 7px;border-radius:8px;margin-right:4px;margin-top:4px}
-.badge-new{background:#EAF3DE;color:#27500A}
-.badge-cur{background:#E6F1FB;color:#0C447C}
-.badge-old{background:#f0f0ec;color:#888}
-.open-btn{padding:8px 18px;border-radius:8px;border:1px solid #ddd;background:#fff;font-size:13px;font-weight:500;cursor:pointer;text-decoration:none;color:#1a1a1a;white-space:nowrap}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f7f7f5;color:#1a1a1a;min-height:100vh;padding:2rem 1.5rem;display:flex;flex-direction:column;align-items:center}
+.hdr{max-width:700px;width:100%;margin-bottom:1.75rem;text-align:center}
+h1{font-size:24px;font-weight:500;margin-bottom:5px}
+.sub{font-size:14px;color:#888;line-height:1.6}
+.versions{max-width:700px;width:100%;display:flex;flex-direction:column;gap:9px}
+.ver{background:#fff;border:1px solid #e8e8e5;border-radius:11px;padding:1rem 1.3rem;display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+.ver:hover{border-color:#378ADD}
+.ver.latest{border:2px solid #378ADD}
+.ver.dep{opacity:.55}
+.ver-left{flex:1;min-width:0}
+.ver-top{display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap}
+.ver-id{font-size:17px;font-weight:600}
+.badge{display:inline-block;font-size:11px;font-weight:500;padding:2px 7px;border-radius:7px}
+.b-new{background:#EAF3DE;color:#27500A}
+.b-stab{background:#E6F1FB;color:#0C447C}
+.b-old{background:#f0f0ec;color:#888}
+.b-sec{background:#FCEBEB;color:#791F1F}
+.ver-desc{font-size:13px;color:#555;line-height:1.5;margin-bottom:5px}
+.ver-tags{font-size:11px;color:#888;line-height:1.8}
+.ver-tags span{display:inline-block;background:#f7f7f5;border-radius:4px;padding:1px 6px;margin:1px 2px}
+.warn-txt{color:#A32D2D;font-size:12px;font-weight:500;margin-top:3px}
+.open-btn{flex-shrink:0;padding:7px 16px;border-radius:8px;border:1px solid #ddd;background:#fff;font-size:13px;font-weight:500;cursor:pointer;text-decoration:none;color:#1a1a1a;white-space:nowrap;align-self:center}
 .open-btn:hover{background:#f7f7f5}
-.open-btn.primary{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
-.open-btn.primary:hover{background:#333}
-.transfer-box{background:#fff;border:1px solid #e8e8e5;border-radius:12px;padding:1.1rem 1.4rem;margin-top:1.5rem}
-.transfer-box h3{font-size:14px;font-weight:500;margin-bottom:8px}
-.transfer-box p{font-size:13px;color:#555;line-height:1.6}
-.transfer-steps{margin-top:8px;font-size:13px;color:#555;line-height:1.9}
-.transfer-steps span{display:inline-block;background:#f0f0ec;border-radius:4px;padding:1px 7px;font-family:monospace;font-size:12px;margin:0 2px}
+.open-btn.p{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.open-btn.p:hover{background:#333}
+.box{max-width:700px;width:100%;background:#fff;border:1px solid #e8e8e5;border-radius:11px;padding:1.1rem 1.3rem;margin-top:1rem}
+.box h3{font-size:14px;font-weight:500;margin-bottom:.5rem}
+.box p{font-size:13px;color:#555;line-height:1.6}
+.steps{margin-top:.5rem;font-size:13px;color:#555;line-height:2}
+.steps code{background:#f0f0ec;border-radius:4px;padding:1px 6px;font-size:12px}
+.sec-note{max-width:700px;width:100%;background:#FFF7ED;border:1px solid #FAC775;border-radius:11px;padding:.9rem 1.3rem;margin-top:1rem}
+.sec-note h3{font-size:13px;font-weight:500;color:#92400E;margin-bottom:3px}
+.sec-note p{font-size:12px;color:#78350F;line-height:1.6}
 .footer{margin-top:1.5rem;font-size:12px;color:#aaa;text-align:center}
 </style>
 </head>
 <body>
-<div class="container">
+
+<div class="hdr">
   <h1>Stock Research Hub</h1>
-  <p class="sub">Select a version to open. Your data transfers between versions using Export/Import.</p>
-
-  <div class="versions" id="versionList">
-    <!-- Versions are defined below in JS and rendered dynamically -->
-  </div>
-
-  <div class="transfer-box">
-    <h3>How to transfer your data between versions</h3>
-    <p>All your portfolio, trade history, paper trades, and simulation data is stored in your browser. To carry it forward to a new version:</p>
-    <div class="transfer-steps">
-      1. Open your <strong>current version</strong><br>
-      2. Go to <span>Export data</span> in the sidebar (or click ⬆️ Export data)<br>
-      3. Save the <span>.json</span> file to your computer<br>
-      4. Open the <strong>new version</strong><br>
-      5. Go to <span>Import data</span> and select the saved file<br>
-      6. All your data is restored instantly ✓
-    </div>
-  </div>
-
-  <div class="footer">Data is stored locally in your browser · No account required · Works offline after first load</div>
+  <p class="sub">Select a version to open. Use Export/Import to transfer your data between versions.</p>
 </div>
 
+<div class="versions" id="vList"></div>
+
+<div class="sec-note">
+  <h3>Security notice — Bitdefender / antivirus warnings</h3>
+  <p><strong>v10 and later:</strong> Use only <code>corsproxy.io</code> — safe, no security warnings. <strong>v8 and v9:</strong> Also used <code>allorigins.win</code> which some security software flags. <strong>v1–v7:</strong> Use <code>corsproxy.io</code> only or have no proxy. If you see security warnings when scanning, upgrade to v10.</p>
+</div>
+
+<div class="box">
+  <h3>Transferring data between versions</h3>
+  <p>Your portfolio, paper trades, watchlist, and simulations are stored in your browser.</p>
+  <div class="steps">
+    1. Open your current version → click <code>Export data</code> in sidebar<br>
+    2. Save the <code>.json</code> file to your computer<br>
+    3. Open the new version → click <code>Import data</code><br>
+    4. Select the saved file → all data restored ✓
+  </div>
+</div>
+
+<div class="footer">Data stored locally in your browser · No account or login required</div>
+
 <script>
-// Add new versions here as you upload them
-const VERSIONS = [
-  {
-    id: 'v4',
-    label: 'Version 4',
-    file: 'v4.html',
-    date: '2025',
-    status: 'latest',
-    features: [
-      'AU 🇦🇺 / US 🇺🇸 market switcher',
-      'Clock + market open/close top-right',
-      'CommSec brokerage (AU & US)',
-      'Auto-simulation (score >80 strategy)',
-      'Liquidity score + volume filter',
-      'Share quantity suggestion',
-      'Export / Import data (JSON)',
-      'Mining, Finance, Energy sectors',
-      'Paper trade log with date & time',
-      'Drop reason via AI',
-    ]
-  },
-  {
-    id: 'v3',
-    label: 'Version 3',
-    file: 'v3.html',
-    date: '2025',
-    status: 'old',
-    features: [
-      'Multi-page navigation',
-      'Portfolio + trade history',
-      'Paper trading simulator',
-      'IPO tracker',
-      'Glossary panel',
-      'Market clock',
-    ]
-  },
-  {
-    id: 'v2',
-    label: 'Version 2',
-    file: 'v2.html',
-    date: '2025',
-    status: 'old',
-    features: [
-      'TA screener (fixed RSI)',
-      'Watchlist',
-      'Column sorting',
-      'ASX sector added',
-    ]
-  },
-  {
-    id: 'v1',
-    label: 'Version 1',
-    file: 'v1.html',
-    date: '2025',
-    status: 'old',
-    features: [
-      'Basic screener',
-      'RSI, SMA20, volume signals',
-      'Biotech/Tech/General sectors',
-    ]
-  },
+const VS=[
+  {id:'v10',file:'v10.html',status:'latest',
+   desc:'Pre-signal detection (trade before RSI=30). Smart position sizing by risk & confidence. Sell price suggestions (limit vs market orders). Undo buttons. Inline portfolio history. Simulation sector selector. corsproxy.io only.',
+   tags:['🎯 Trade ahead of AI','📐 Smart position sizing','💰 Sell price suggestions','↩ Undo','📜 Inline history','🔒 No security warnings'],sec:'safe'},
+  {id:'v9',file:'v9.html',status:'stable',
+   desc:'ASX200/300/500/1000 tier scans. MACD in score. Watchlist. Stop-loss & profit targets. Sell tracking.',
+   tags:['ASX1000 (360+ tickers)','MACD score','Watchlist','Stop-loss & targets'],sec:'warning'},
+  {id:'v8',file:'v8.html',status:'old',
+   desc:'3-panel side-by-side simulation. 204 AU tickers. Sector button UI. Compare strategies.',
+   tags:['3-panel simulation','204 tickers','Sector buttons'],sec:'warning'},
+  {id:'v7',file:'v7.html',status:'old',
+   desc:'Fixed page navigation (broken in v6). Yahoo news links for drop reason. Button filters.',
+   tags:['Fixed navigation','Yahoo news links','Button UI'],sec:'safe'},
+  {id:'v6',file:'v6.html',status:'dep',
+   desc:'Help panels, multi-sim, news page added. Navigation broken — use v7 instead.',
+   tags:['Help panels','News page'],sec:'safe',warn:'⚠ Navigation broken — use v7+'},
+  {id:'v5',file:'v5.html',status:'old',
+   desc:'Settings page. Hold duration estimates. Sell notifications.',
+   tags:['Settings page','Hold estimates'],sec:'safe'},
+  {id:'v4',file:'v4.html',status:'old',
+   desc:'AU/US market switcher. Portfolio. Paper trading. IPO tracker. Market clock. Glossary.',
+   tags:['AU/US switcher','Portfolio','Paper trading','IPO tracker','Market clock'],sec:'safe'},
+  {id:'v3',file:'v3.html',status:'old',
+   desc:'First multi-page version. Sidebar nav. Portfolio. Glossary.',
+   tags:['Sidebar nav','Portfolio','Glossary'],sec:'safe'},
+  {id:'v2',file:'v2.html',status:'old',
+   desc:'Fixed RSI bug (was showing negatives). Watchlist. Column sorting.',
+   tags:['RSI fix','Watchlist','Sorting'],sec:'safe'},
+  {id:'v1',file:'v1.html',status:'old',
+   desc:'Original screener with RSI, SMA20, volume signals.',
+   tags:['Basic screener','RSI/SMA/Volume'],sec:'safe'},
 ];
 
-const list = document.getElementById('versionList');
-VERSIONS.forEach(v => {
-  const isLatest = v.status === 'latest';
-  const card = document.createElement('div');
-  card.className = 'ver-card' + (isLatest ? ' latest' : '');
-  const badgeHtml = isLatest
-    ? '<span class="ver-badge badge-new">Latest</span>'
-    : '<span class="ver-badge badge-old">Older</span>';
-  card.innerHTML = `
-    <div class="ver-left">
-      <div class="ver-num">${v.id}</div>
-      <div class="ver-info">
-        <h3>${v.label} ${badgeHtml}</h3>
-        <p>${v.features.slice(0, 3).join(' · ')}${v.features.length > 3 ? ` · +${v.features.length - 3} more` : ''}</p>
-      </div>
-    </div>
-    <a href="${v.file}" class="open-btn ${isLatest ? 'primary' : ''}">Open →</a>`;
-  list.appendChild(card);
+const list=document.getElementById('vList');
+VS.forEach(v=>{
+  const isL=v.status==='latest',isDep=v.status==='dep';
+  const badg=isL?'<span class="badge b-new">Latest</span>':v.status==='stable'?'<span class="badge b-stab">Stable</span>':isDep?'<span class="badge b-old">Deprecated</span>':'<span class="badge b-old">v'+v.id.slice(1)+'</span>';
+  const sec=v.sec==='warning'?'<span class="badge b-sec">⚠ Security warning</span>':'';
+  const tags=v.tags.map(t=>`<span>${t}</span>`).join('');
+  const warn=v.warn?`<div class="warn-txt">${v.warn}</div>`:'';
+  const d=document.createElement('div');
+  d.className='ver'+(isL?' latest':'')+(isDep?' dep':'');
+  d.innerHTML=`<div class="ver-left"><div class="ver-top"><span class="ver-id">${v.id}</span>${badg}${sec}</div><div class="ver-desc">${v.desc}</div><div class="ver-tags">${tags}</div>${warn}</div><a href="${v.file}" class="open-btn ${isL?'p':''}">Open →</a>`;
+  list.appendChild(d);
 });
 </script>
 </body>
