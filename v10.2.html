@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Stock Research Hub v7</title>
+<title>Stock Research Hub v10.2</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f7f7f5;color:#1a1a1a;min-height:100vh;display:flex;flex-direction:column}
@@ -234,7 +234,7 @@ tr:hover td{background:#fafaf8}
   </div>
 
   <div class="info" style="font-size:12px">
-    <strong>Score (v7):</strong> RSI oversold + SMA20 deviation + volume spike + drop magnitude + near 52-wk low bonus + SMA50 trend filter. <strong>Confidence</strong> = score adjusted for volatility. <strong>Drop reason</strong> links directly to Yahoo Finance news for each stock.
+    <strong>Score (v10.2):</strong> RSI oversold + SMA20 deviation + volume spike + drop magnitude + near 52-wk low bonus + SMA50 trend filter + MACD momentum. <strong>Confidence</strong> = score adjusted for volatility. <strong>Drop reason</strong> links directly to Yahoo Finance news for each stock.
   </div>
   <div class="prog-w" id="sp"><div class="prog-f" id="spf" style="width:0%"></div></div>
   <div class="sbar" id="ss">Select sector and press Scan now.</div>
@@ -926,13 +926,13 @@ function nav(id){
 // GLOSSARY
 // ═══════════════════════════
 const GLOSS=[
-  {term:'RSI (0–100)',tag:'ta',tl:'Technical',def:'Relative Strength Index. Below 30 = oversold (potential buy). Above 70 = overbought (potential sell). Very low RSI (<20) can mean a "falling knife" — the stock is in freefall, not just oversold. v7 gives fewer points for extreme RSI.',links:[{t:'Investopedia: RSI',u:'https://www.investopedia.com/terms/r/rsi.asp'}]},
+  {term:'RSI (0–100)',tag:'ta',tl:'Technical',def:'Relative Strength Index. Below 30 = oversold (potential buy). Above 70 = overbought (potential sell). Very low RSI (<20) can mean a "falling knife" — the stock is in freefall, not just oversold. v10.2 gives fewer points for extreme RSI.',links:[{t:'Investopedia: RSI',u:'https://www.investopedia.com/terms/r/rsi.asp'}]},
   {term:'SMA20 (20-day average)',tag:'ta',tl:'Technical',def:'Average closing price over 20 trading days. "vs SMA20" shows how far current price sits below (negative) or above (positive) this average. Far below = stretched, tends to revert up.',links:[{t:'Investopedia: Moving Average',u:'https://www.investopedia.com/terms/s/sma.asp'}]},
   {term:'SMA50 trend filter',tag:'ta',tl:'Technical',def:'50-day average used as a hidden trend check. If current price is below SMA50, the stock is still in a downtrend — score is reduced by 10 points. Above SMA50 = early reversal = +5 points. You never see this column — it works inside the score.',links:[]},
-  {term:'Volume spike',tag:'ta',tl:'Technical',def:'Recent 5-day average volume ÷ 20-day average. 2× = twice normal trading. High volume on a drop = capitulation (panic selling exhaustion), which often precedes a bounce. v7 gives an extra 5 pts if vol spike >2 AND drop >10% (confirmed capitulation).',links:[{t:'Investopedia: Volume',u:'https://www.investopedia.com/terms/v/volume.asp'}]},
+  {term:'Volume spike',tag:'ta',tl:'Technical',def:'Recent 5-day average volume ÷ 20-day average. 2× = twice normal trading. High volume on a drop = capitulation (panic selling exhaustion), which often precedes a bounce. v10.2 gives an extra 5 pts if vol spike >2 AND drop >10% (confirmed capitulation).',links:[{t:'Investopedia: Volume',u:'https://www.investopedia.com/terms/v/volume.asp'}]},
   {term:'Bounce score & confidence',tag:'ta',tl:'Technical',def:'Score 0–100: RSI (up to 35pts) + SMA20 deviation (30pts) + volume spike (20pts) + drop size (12pts) + near-bottom bonus (10pts) + SMA50 trend (±10pts). Confidence = score minus a volatility penalty (high drop + high vol spike = less reliable).',links:[]},
-  {term:'Dead cat bounce filter',tag:'ta',tl:'Technical',def:'A "dead cat bounce" is a brief recovery in a stock that is actually still falling. v7 adds points if the stock is near its 52-week low (likely near a floor) and subtracts points if it is far above its 52-week low (the drop may have much further to go).',links:[]},
-  {term:'Near bottom indicator',tag:'ta',tl:'Technical',def:'Shows where current price sits between its 52-week low and 52-week high. Left (red) = very close to 52-week low = likely near a floor. Right (green) = far above the low = stock may have further to fall. Integrated into score since v7.',links:[{t:'Investopedia: 52-Week Low',u:'https://www.investopedia.com/terms/1/52wklow.asp'}]},
+  {term:'Dead cat bounce filter',tag:'ta',tl:'Technical',def:'A "dead cat bounce" is a brief recovery in a stock that is actually still falling. The score adds points if the stock is near its 52-week low (likely near a floor) and subtracts points if it is far above its 52-week low (the drop may have much further to go).',links:[]},
+  {term:'Near bottom indicator',tag:'ta',tl:'Technical',def:'Shows where current price sits between its 52-week low and 52-week high. Left (red) = very close to 52-week low = likely near a floor. Right (green) = far above the low = stock may have further to fall. Integrated into the score.',links:[{t:'Investopedia: 52-Week Low',u:'https://www.investopedia.com/terms/1/52wklow.asp'}]},
   {term:'Hold duration estimate',tag:'ta',tl:'Technical',def:'Estimated days to hold before the sell signal triggers. Calculated as: (RSI sell target − current RSI) × base days per point. E.g. if RSI is 25 and target is 55, and base is 0.8 days/point: (55−25)×0.8 = 24 days. Adjust base and target in Settings.',links:[]},
   {term:'Sell signal',tag:'ta',tl:'Technical',def:'"Hold" = RSI below sell threshold and not stretched above SMA20. "Consider selling" = RSI elevated or price 10%+ above SMA20. "Strong sell" = RSI very high or price 15%+ above SMA20. Always combine with news.',links:[{t:'RSI sell signals',u:'https://www.investopedia.com/articles/active-trading/042114/overbought-or-oversold-use-relative-strength-index-find-out.asp'}]},
   {term:'Liquidity & volume filter',tag:'ta',tl:'Technical',def:'Average daily shares traded. Stocks below 100K/day get 40% score penalty. Stocks below 300K/day get 20% penalty. This reflects your correct insight: even good signals in low-volume stocks often don\'t produce price moves because not enough people are trading.',links:[{t:'Investopedia: Liquidity',u:'https://www.investopedia.com/terms/l/liquidity.asp'}]},
@@ -2086,7 +2086,7 @@ function saveSlotSettings(slot){
 }
 
 function loadSlotSettings(){
-  [0,1,2].forEach(slot=>{
+  [0,1,2,3].forEach(slot=>{
     const sfx=SIM_SFXS[slot];
     try{
       const cfg=JSON.parse(localStorage.getItem('simcfg_'+slot)||'null');
@@ -2109,8 +2109,9 @@ function resetSimSlot(slot){
   renderSimStats(slot);
 }
 function resetAllSims(){
-  if(!confirm('Reset ALL 3 strategies?'))return;
-  [0,1,2].forEach(i=>{localStorage.removeItem(SIMKEYS[i]);renderSimStats(i);});
+  if(!confirm('Reset ALL 4 strategies?'))return;
+  [0,1,2,3].forEach(i=>{localStorage.removeItem(SIMKEYS[i]);renderSimStats(i);});
+  renderSimDetail();
 }
 
 function getSlotCfg(slot){
@@ -2184,6 +2185,7 @@ function runSimOnStocks(slot, stocks, preSignalStocks){
 function runSimDOnStocks(sim,cfg,preSignalStocks){
   // Strategy D: buy pre-signal stocks (early momentum before RSI hits 30)
   // Smaller position, tighter stop-loss
+  if(!sim.positions.length&&!sim.history.length){sim.startCash=cfg.sc;sim.cash=cfg.sc;}
   const now=new Date().toISOString().split('T')[0];
   const MAX_NEW=3,MAX_TOT=5;
   const thr=cfg.thr||60;
@@ -2193,6 +2195,7 @@ function runSimDOnStocks(sim,cfg,preSignalStocks){
   sim.positions.forEach(pos=>{
     const match=preSignalStocks.find(s=>s.ticker===pos.ticker);
     if(!match)return;
+    pos.curPrice=match.cur;
     const pnlPct=((match.cur-pos.buyPrice)/pos.buyPrice)*100;
     const scoreDrop=pos.scoreAtBuy-(match.earlyScore||0);
     let sell=false;
@@ -2368,10 +2371,10 @@ async function runSimScan(){await runAllSimScans();}
 // EXPORT / IMPORT
 // ═══════════════════════════
 function exportData(){
-  const data={version:'v9',exported:new Date().toISOString(),settings:getS(),portfolio:getPF(),history:getHist(),paper:getPP(),watchlist:getWL(),sim_a:JSON.parse(localStorage.getItem('sim')||'null'),sim_b:JSON.parse(localStorage.getItem('sim_b')||'null'),sim_c:JSON.parse(localStorage.getItem('sim_c')||'null')};
+  const data={version:'v10.2',exported:new Date().toISOString(),settings:getS(),portfolio:getPF(),history:getHist(),paper:getPP(),watchlist:getWL(),sim_a:JSON.parse(localStorage.getItem('sim')||'null'),sim_b:JSON.parse(localStorage.getItem('sim_b')||'null'),sim_c:JSON.parse(localStorage.getItem('sim_c')||'null'),sim_d:JSON.parse(localStorage.getItem('sim_d')||'null')};
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download=`stock-hub-v7-${new Date().toISOString().split('T')[0]}.json`;a.click();
+  a.download=`stock-hub-v10.2-${new Date().toISOString().split('T')[0]}.json`;a.click();
 }
 function importData(input){
   const file=input.files[0];if(!file)return;
@@ -2386,6 +2389,7 @@ function importData(input){
       if(d.sim_a)localStorage.setItem('sim',JSON.stringify(d.sim_a));
       if(d.sim_b)localStorage.setItem('sim_b',JSON.stringify(d.sim_b));
       if(d.sim_c)localStorage.setItem('sim_c',JSON.stringify(d.sim_c));
+      if(d.sim_d)localStorage.setItem('sim_d',JSON.stringify(d.sim_d));
       if(d.watchlist)localStorage.setItem('wl',JSON.stringify(d.watchlist));
       alert('Imported! Portfolio, watchlist, history, paper trades, all simulation slots, and settings restored.');
       renderPF();renderHist();renderPP();renderSim();renderSettings();renderWL();
@@ -2482,7 +2486,7 @@ function getSnapshots(key){
 
 // ─ Paper trading chart ─
 const _origRenderPP=renderPP;
-function renderPP(){
+renderPP=function(){
   _origRenderPP();
   const pp=getPP();
   const portVal=pp.positions.reduce((a,x)=>a+x.shares*x.curPrice,0);
@@ -2491,11 +2495,11 @@ function renderPP(){
     const snaps=recordSnapshot('pp_equity',total);
     drawEquityChart('ppChart',snaps,'Paper portfolio value','#378ADD');
   }
-}
+};
 
 // ─ Portfolio chart ─
 const _origRenderPF=renderPF;
-function renderPF(){
+renderPF=function(){
   _origRenderPF();
   const arr=getPF();
   if(arr.length){
@@ -2505,7 +2509,7 @@ function renderPF(){
     const snaps=recordSnapshot('pf_equity',total);
     drawEquityChart('pfChart',snaps,'Portfolio market value','#639922');
   }
-}
+};
 
 // ─ Simulation chart ─
 function renderSimChart(){
@@ -2558,10 +2562,10 @@ function renderSimChart(){
 
 // Update renderSim to include chart
 const _origRenderSim=renderSim;
-function renderSim(){
+renderSim=function(){
   _origRenderSim();
   renderSimChart();
-}
+};
 
 </script>
 </body>
