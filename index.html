@@ -56,7 +56,7 @@ h1{font-size:25px;font-weight:600;margin-bottom:5px}
   <div class="steps">
     1. Open your old version and click <code>Export data</code> in the sidebar<br>
     2. Save the <code>.json</code> file to your computer<br>
-    3. Open v10.2 and click <code>Import data</code><br>
+    3. Open v10.3 and click <code>Import data</code><br>
     4. Select the saved file to restore your data
   </div>
 </div>
@@ -65,10 +65,13 @@ h1{font-size:25px;font-weight:600;margin-bottom:5px}
 
 <script>
 const VS=[
-  {id:'v10.2',file:'v10.2.html',status:'latest',
-   desc:'Current Stock Research Hub build with pre-signal detection, smart position sizing, sell suggestions, undo, portfolio history, simulation sectors, and corsproxy.io-only market data.',
-   tags:['Current root file','Trade ahead of AI','Smart sizing','Sell suggestions','No old proxy warnings'],sec:'safe'},
-  {id:'v10.1',file:'previous_versions/v10.1.html',status:'stable',
+  {id:'v10.3',file:'v10.3.html',status:'latest',
+   desc:'Current Stock Research Hub build with abortable market-data requests, fallback data sources, scan caching, pre-signal detection, smart sizing, and sell suggestions.',
+   tags:['Current root file','Timeout fix','Fallback data','Cached scans','Smart sizing'],sec:'safe'},
+  {id:'v10.2',file:'previous_versions/v10.2.html',status:'stable',
+   desc:'Archived v10.2 build before the timeout fix.',
+   tags:['Archived'],sec:'safe'},
+  {id:'v10.1',file:'previous_versions/v10.1.html',status:'old',
    desc:'Archived previous v10 build.',
    tags:['Archived'],sec:'safe'},
   {id:'v10',file:'previous_versions/v10.html',status:'old',
